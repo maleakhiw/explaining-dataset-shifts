@@ -13,17 +13,19 @@ This repository contains source code of the system and experimentation results.
 - pandas
 - matplotlib
 - jupyter
+- scipy
+- TensorFlow 2
 
 ## Folder Structure:
-- *data*: contains datasets used for experimentation.
-- *notebooks*: contains experimentation prototype codes.
-- *results*: contains experimentation results, model configurations, pickles.
-- *scripts*: contains clean source code files.
+- ```data```: contains datasets used for experimentation.
+- ```experiments```: contains notebooks that we used to run experiments and visualise results.
+- ```results```: contains pickled experimentation results.
+- ```models```: contains pretrained neural network models.
+- ```scripts```: the source codes and utility functions.
 
 ## Setup:
 ```bash
 git clone https://github.com/maleakhiw/explaining-dataset-shifts.git
-cd scripts
 pip install -r requirements.txt
 ```
 
