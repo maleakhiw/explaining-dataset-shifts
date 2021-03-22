@@ -13,7 +13,6 @@ from enum import Enum
 
 MAJORITY = "MAJORITY"
 
-
 #-------------------------------------------------------------------------------
 ## Shift configurations
 
