@@ -27,6 +27,7 @@ This repository contains source code of the system and experimentation results.
 ## Setup:
 ```bash
 git clone https://github.com/maleakhiw/explaining-dataset-shifts.git
+cd explaining-dataset-shifts
 pip install -r requirements.txt
 ```
 
