@@ -15,6 +15,7 @@ This repository contains source code of the system and experimentation results.
 - jupyter
 - scipy
 - TensorFlow 2
+- torch
 
 ## Folder Structure:
 - ```data```: contains datasets used for experimentation.
