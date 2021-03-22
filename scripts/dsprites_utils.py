@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# dSprites Utilities
+# DSPRITES UTILITIES
 # 
 # Author: Maleakhi A. Wijaya
 # Description: this file contains functions used to load and preprocess dSprites

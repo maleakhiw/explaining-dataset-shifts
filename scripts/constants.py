@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Constants
+# CONSTANTS
 # 
 # Author: Maleakhi A. Wijaya
 # Description: This file contains constants, including shift intensity levels,
@@ -86,3 +86,10 @@ class ImageDataGeneratorConfig:
         ShiftIntensity.Medium: (True, False),
         ShiftIntensity.Large: (True, True)
     }
+
+#-------------------------------------------------------------------------------
+## Statistical tests configuration
+
+class OnedimensionalTest(Enum):
+    KS = 0
+    AD = 1

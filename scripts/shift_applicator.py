@@ -13,7 +13,7 @@ from collections import Counter
 from constants import *
 
 #-------------------------------------------------------------------------------
-## Shift Applicator
+## Shift applicator
 
 def apply_gaussian_shift(X_te_orig, y_te_orig, shift_intensity, shift_prop):
     """
