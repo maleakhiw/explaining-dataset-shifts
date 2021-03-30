@@ -15,6 +15,7 @@ import numpy as np
 
 from constants import *
 
+
 #-------------------------------------------------------------------------------
 
 def test_shift_bin(n_successes, n, p):

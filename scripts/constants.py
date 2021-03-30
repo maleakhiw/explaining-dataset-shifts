@@ -8,10 +8,12 @@
 
 from enum import Enum
 
+
 #-------------------------------------------------------------------------------
 ## Constants
 
 MAJORITY = "MAJORITY"
+
 
 #-------------------------------------------------------------------------------
 ## Shift configurations
@@ -87,12 +89,14 @@ class ImageDataGeneratorConfig:
         ShiftIntensity.Large: (True, True)
     }
 
+
 #-------------------------------------------------------------------------------
 ## Statistical tests configuration
 
 class OnedimensionalTest(Enum):
     KS = 0
     AD = 1
+
 
 #-------------------------------------------------------------------------------
 ## Dataset configuration

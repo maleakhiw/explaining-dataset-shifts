@@ -120,7 +120,7 @@ def end_to_end_neural_network(num_classes, dataset,
 #-------------------------------------------------------------------------------
 ## Concept bottleneck model (input-to-concept)
 
-def multitask_model(dataset, X_train, c_train, X_valid, c_valid):
+def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None):
     """
     Multitask neural network that is tasked to predict all concepts jointly.
 
@@ -167,8 +167,69 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid):
                         validation_data=(x_valid, [c_valid[:, 0], c_valid[:, 1], 
                         c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
                         callbacks=[lr_reducer, early_stopper])
-                        
+
+    # Save if specified
+    if save_path:
+        model.save(save_path)
+
     return histories, model
+
+
+#-------------------------------------------------------------------------------
+## Autoencoders (untrained and trained)
+
+def autoencoder(dataset, X_train, X_val, orig_dims, train=True):
+    """
+    Build autoencoder to reduce dimensionality representation. The autoencoder
+    can be trained or untrained (e.g., using random weights).
+
+    :param dataset: one of Dataset values in constants.py.
+    :param X_train: the training dataset.
+    :param X_valid: used for validating reconstruction loss.
+    :param orig_dims: the original dimensions of the image.
+    :param train: indicate whether to use trained or untrained autoencoder.
+
+    :return: encoder network and the full autoencoder
+    """
+
+    X = X_train.reshape(-1, orig_dims[0], orig_dims[1], orig_dims[2])
+
+    input_img = Input(shape=orig_dims)
+
+    # Define AE architecture
+    if dataset == Dataset.DSPRITES:
+        x = layers.Conv2D(16, (3, 3), activation='relu', padding='same')(input_img)
+        x = layers.MaxPooling2D((2, 2), padding="same")(x)
+        x = layers.Conv2D(8, (3, 3), activation='relu', padding='same')(x)
+        x = layers.MaxPooling2D((2, 2), padding="same")(x)
+        x = layers.Conv2D(2, (3, 3), activation='relu', padding='same')(x)
+        encoded = layers.MaxPooling2D((2, 2), padding="same")(x)
+
+        x = layers.Conv2D(2, (3, 3), activation='relu', padding='same')(encoded)
+        x = layers.UpSampling2D((2, 2))(x)
+        x = layers.Conv2D(8, (3, 3), activation='relu', padding='same')(x)
+        x = layers.UpSampling2D((2, 2))(x)
+        x = layers.Conv2D(16, (3, 3), activation='relu', padding="same")(x)
+        x = layers.UpSampling2D((2, 2))(x)
+        decoded = layers.Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
+
+    # Construct both an encoding model and a full encoding-decoding model. The first one will be used for mere
+    # dimensionality reduction, while the second one is needed for training.
+    encoder = Model(input_img, encoded)
+    autoenc = Model(input_img, decoded)
+
+    autoenc.compile(optimizer=optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9), loss='binary_crossentropy')
+
+    if train:
+        autoenc.fit(X.reshape(len(X), orig_dims[0], orig_dims[1], orig_dims[2]), 
+                    X.reshape(len(X), orig_dims[0], orig_dims[1], orig_dims[2]),
+                    epochs=200,
+                    batch_size=128,
+                    validation_data=(X_val.reshape(len(X_val), orig_dims[0], orig_dims[1], orig_dims[2]), 
+                                     X_val.reshape(len(X_val), orig_dims[0], orig_dims[1], orig_dims[2])),
+                    shuffle=True)
+                    
+    return encoder, autoenc
 
 
 #-------------------------------------------------------------------------------

@@ -18,6 +18,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
+
 #-------------------------------------------------------------------------------
 ## Load
 
@@ -60,6 +61,7 @@ def load_dsprites(path, dataset_size_used, train_size=0.85, class_index=1):
 
     return x_train, x_test, y_train, y_test, c_train, c_test
 
+
 #-------------------------------------------------------------------------------
 ## Visualisation
 
@@ -84,6 +86,7 @@ def show_images_grid(imgs_, num_images=25):
             ax.set_yticks([])
         else:
             ax.axis('off')
+
 
 #-------------------------------------------------------------------------------
 ## Helper

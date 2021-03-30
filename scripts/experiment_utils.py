@@ -1,13 +1,16 @@
 #-------------------------------------------------------------------------------
-# UTILITIES
+# EXPERIMENT UTILITIES
 # 
 # Author: Maleakhi A. Wijaya
-# Description: This file contains helper functions that is used in various files.
+# Description: This file contains functions used for data collection and visualising
+#   experimentation results.
 #-------------------------------------------------------------------------------
 
 import numpy as np
 
+
 #-------------------------------------------------------------------------------
+## Helper functions
 
 def unison_shuffled_copies(a, b, c):
     """

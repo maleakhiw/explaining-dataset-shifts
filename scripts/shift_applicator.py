@@ -12,6 +12,7 @@ from collections import Counter
 
 from constants import *
 
+
 #-------------------------------------------------------------------------------
 ## Shift applicator
 
