@@ -172,7 +172,7 @@ def apply_img_shift(X_te_orig, y_te_orig, orig_dims, shift_intensity,
     y_te_1 = None
 
     ## No specific type of image shifts given
-    if shift_type == ShiftImageType.All :
+    if shift_types == ShiftImageType.All :
         rotation_range = ImageDataGeneratorConfig.Rotation[shift_intensity]
         width_shift_range = ImageDataGeneratorConfig.Width[shift_intensity]
         height_shift_range = ImageDataGeneratorConfig.Height[shift_intensity]
