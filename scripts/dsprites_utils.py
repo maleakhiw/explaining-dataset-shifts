@@ -17,6 +17,7 @@ import numpy as np
 from copy import deepcopy
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+import pandas as pd
 
 
 #-------------------------------------------------------------------------------
