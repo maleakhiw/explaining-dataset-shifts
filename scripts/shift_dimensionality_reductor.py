@@ -67,13 +67,16 @@ def sparse_random_projection(X, n_components=None):
 #-------------------------------------------------------------------------------
 ## End-to-end neural network
 
-def end_to_end_neural_network(num_classes, dataset):
+def end_to_end_neural_network(num_classes, dataset, 
+                            X_train, y_train, X_valid, y_valid, save_path=None):
     """
     End to end neural network that will be used as reduced representation for the
     BBSD-based methods.
 
     :param num_classes: the number of classes, for output layer.
     :param dataset: one of Dataset in constants.py.
+    :param X_train, y_train, X_valid, y_valid: data used to train the neural network.
+    :param save_path: if specified, save the model after training.
 
     :return: the end-to-end neural network architecture.
     """
@@ -88,13 +91,36 @@ def end_to_end_neural_network(num_classes, dataset):
         out = layers.Dense(num_classes, activation="softmax")(x)
     
     model = tf.keras.Model(inputs=img_inputs, outputs=out)
-    return model
+
+    # Compile and train model
+    optimizer = optimizers.Adam(lr=1e-4, amsgrad=True)
+    epochs = 200
+    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+    early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+    batch_size = 128
+
+    optimizer = tf.keras.optimizers.Adam(lr=1e-4, amsgrad=True)
+    model.compile(loss="sparse_categorical_crossentropy",
+                            metrics=["accuracy"],
+                            optimizer=optimizer)
+
+    histories = model.fit(x=X_train, y=y_train,
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        validation_data=(X_valid, y_valid),
+                        callbacks=[lr_reducer, early_stopper])
+
+    # Save if specified
+    if save_path:
+        model.save(save_path)
+
+    return histories, model
 
 
 #-------------------------------------------------------------------------------
 ## Concept bottleneck model (input-to-concept)
 
-def multitask_model(dataset):
+def multitask_model(dataset, X_train, c_train, X_valid, c_valid):
     """
     Multitask neural network that is tasked to predict all concepts jointly.
 
@@ -117,10 +143,32 @@ def multitask_model(dataset):
         task_x = layers.Dense(concepts_size[4], activation="softmax", name="x")(x)
         task_y = layers.Dense(concepts_size[5], activation="softmax", name="y")(x)
         
-        # Return model
         model = tf.keras.Model(inputs=img_inputs, outputs=[task_color, task_shape, task_scale, task_rotation, task_x, task_y])
-    
-    return model
+        
+        # Compile and train model
+        optimizer = tf.keras.optimizers.Adam(lr=1e-4, amsgrad=True)
+        model.compile(optimizer=optimizer,
+                    loss=[
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+                    ], metrics=["accuracy"])
+        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+        early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+        epochs = 200
+        batch_size = 128
+
+        histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
+                        c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
+                        epochs=epochs, batch_size=128,
+                        validation_data=(x_valid, [c_valid[:, 0], c_valid[:, 1], 
+                        c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
+                        callbacks=[lr_reducer, early_stopper])
+                        
+    return histories, model
 
 
 #-------------------------------------------------------------------------------
