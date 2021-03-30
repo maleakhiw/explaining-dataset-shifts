@@ -33,7 +33,7 @@ def test_shift_bin(n_successes, n, p):
     return p_val
 
 
-def one_dimensional_test(X1, X2, test_type=OneDimensionalTest.KS):
+def one_dimensional_test(X1, X2, test_type):
     """
     Given two matrices (each matrix is of size n x features), we conduct one 
     dimensional statistical test to each of the component using Kolmogorov-Smirnov

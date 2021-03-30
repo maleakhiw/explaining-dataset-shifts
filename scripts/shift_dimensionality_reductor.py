@@ -85,7 +85,7 @@ def end_to_end_neural_network(num_classes, dataset,
         img_inputs = Input(shape=(64, 64, 1))
 
         # Shared layers
-        x = SharedCNNBlock()(img_inputs)
+        x = SharedCNNBlock(dataset)(img_inputs)
 
         # Output layer
         out = layers.Dense(num_classes, activation="softmax")(x)
@@ -131,7 +131,7 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
         img_inputs = Input(shape=(64, 64, 1))
 
         # Shared layers
-        x = SharedCNNBlock()(img_inputs)
+        x = SharedCNNBlock(dataset)(img_inputs)
 
         # Task specific layer
         concepts_size = get_latent_sizes() # list describing number of possible concepts
