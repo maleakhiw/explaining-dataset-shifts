@@ -318,3 +318,46 @@ def knockout_shift(x, y, cl, delta, return_indices=False):
         return x, y
     else:
         return x, del_indices
+
+def image_generator(x, 
+                    orig_dims, 
+                    rot_range, 
+                    width_range, 
+                    height_range, 
+                    shear_range, 
+                    zoom_range, 
+                    horizontal_flip, 
+                    vertical_flip, 
+                    delta=1.0):
+    """
+    Perform image perturbations (e.g., translation, rotation, shear, zoom).
+    
+    :param x: the image.
+    :param orig_dims: original dimension of the input image (not including batch size: height, width, channel only).
+    :param rot_range, width_range, height_range, shear_range, zoom_range, horizontal_flip, vertical_flip:
+        range of augmentation values (for flip - boolean indicating whether to do horizontal and vertical flip)
+    :param delta: proportion of data where we will apply the shift.
+    
+    :return: new images, and indices where we apply the image perturbations.
+    """
+    
+    # Random indices where we will apply shift transformation
+    indices = np.random.choice(x.shape[0], ceil(x.shape[0] * delta), replace=False)
+    datagen = ImageDataGenerator(rotation_range=rot_range,
+                                 width_shift_range=width_range,
+                                 height_shift_range=height_range,
+                                 shear_range=shear_range,
+                                 zoom_range=zoom_range,
+                                 horizontal_flip=horizontal_flip,
+                                 vertical_flip=vertical_flip,
+                                 fill_mode="nearest")
+    
+    # Subset of images with random indices
+    x_mod = x[indices, :]
+    for idx in range(len(x_mod)):
+        img_sample = x_mod[idx, :].reshape(orig_dims) # reshape single image to original image
+        mod_img_sample = datagen.flow(np.array([img_sample]), batch_size=1)[0]
+        x_mod[idx, :] = mod_img_sample.reshape(np.prod(mod_img_sample.shape))
+    x[indices, :] = x_mod
+    
+    return x, indices
