@@ -13,7 +13,7 @@ from enum import Enum
 ## Constants
 
 MAJORITY = "MAJORITY"
-
+DSPRITES_CONCEPT_NAMES = ["color", "shape", "scale", "rotation", "x", "y"]
 
 
 #-------------------------------------------------------------------------------

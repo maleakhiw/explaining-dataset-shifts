@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.random_projection import SparseRandomProjection
 import tensorflow as tf
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
-from tensorflow.keras import optimizers, layers, Input
+from tensorflow.keras import optimizers, layers, Input, Model
 from sklearn.linear_model import LogisticRegression
 
 from constants import *
@@ -164,7 +164,7 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
         histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
                         c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
                         epochs=epochs, batch_size=128,
-                        validation_data=(x_valid, [c_valid[:, 0], c_valid[:, 1], 
+                        validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
                         c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
                         callbacks=[lr_reducer, early_stopper])
 
