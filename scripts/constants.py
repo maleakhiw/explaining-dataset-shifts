@@ -93,3 +93,15 @@ class ImageDataGeneratorConfig:
 class OnedimensionalTest(Enum):
     KS = 0
     AD = 1
+
+#-------------------------------------------------------------------------------
+## Dataset configuration
+
+class Dataset(Enum):
+    """
+    Constants representing the dataset.
+    """
+
+    DSPRITES = 0
+    3DSHAPES = 1
+    SMALLNORB = 2

@@ -3,7 +3,7 @@
 # 
 # Author: Maleakhi A. Wijaya
 # Description: This file contains various statistical tests functions.
-# Credit: Some test codes are taken from the failing-loudly repository, written
+# Credit: Some test codes were taken from the failing-loudly repository, written
 #    by Stephan Rabanser.
 #-------------------------------------------------------------------------------
 
