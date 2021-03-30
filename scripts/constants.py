@@ -94,7 +94,7 @@ class ImageDataGeneratorConfig:
 #-------------------------------------------------------------------------------
 ## Statistical tests configuration
 
-class OnedimensionalTest(Enum):
+class OneDimensionalTest(Enum):
     KS = 0
     AD = 1
 
