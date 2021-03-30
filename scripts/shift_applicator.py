@@ -256,7 +256,7 @@ def gaussian_noise_subset(x, noise_amt, normalization=1.0, delta_total=1.0,
     """
     
     # Indices of images where we apply noise (random indices)
-    indices = np.random.choice(x.shape[0], ceil(x.shape[0] * delta_total), replace=False)
+    indices = np.random.choice(x.shape[0], np.ceil(x.shape[0] * delta_total), replace=False)
     x_mod = x[indices, :] # images
     
     # Create noise of appropriate size for all pixels (or other data structures)
@@ -299,7 +299,7 @@ def knockout_shift(x, y, cl, delta, return_indices=False):
     
     # Indices to be deleted
     del_indices = np.where(y == cl)[0]
-    until_index = ceil(delta * len(del_indices))
+    until_index = np.ceil(delta * len(del_indices))
     
     # Prevent error (delete too much)
     # You cannot delete everything.
