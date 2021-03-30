@@ -342,7 +342,7 @@ def image_generator(x,
     """
     
     # Random indices where we will apply shift transformation
-    indices = np.random.choice(x.shape[0], ceil(x.shape[0] * delta), replace=False)
+    indices = np.random.choice(x.shape[0], int(np.ceil(x.shape[0] * delta)), replace=False)
     datagen = ImageDataGenerator(rotation_range=rot_range,
                                  width_shift_range=width_range,
                                  height_shift_range=height_range,
