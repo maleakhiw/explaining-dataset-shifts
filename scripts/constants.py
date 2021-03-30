@@ -108,5 +108,5 @@ class Dataset(Enum):
     """
 
     DSPRITES = 0
-    3DSHAPES = 1
+    SHAPES3D = 1
     SMALLNORB = 2
