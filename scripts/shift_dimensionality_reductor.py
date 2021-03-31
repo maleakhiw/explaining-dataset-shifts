@@ -223,7 +223,7 @@ def autoencoder(dataset, X_train, X_val, orig_dims, train=True):
     if train:
         autoenc.fit(X.reshape(len(X), orig_dims[0], orig_dims[1], orig_dims[2]), 
                     X.reshape(len(X), orig_dims[0], orig_dims[1], orig_dims[2]),
-                    epochs=200,
+                    epochs=90,
                     batch_size=128,
                     validation_data=(X_val.reshape(len(X_val), orig_dims[0], orig_dims[1], orig_dims[2]), 
                                      X_val.reshape(len(X_val), orig_dims[0], orig_dims[1], orig_dims[2])),
