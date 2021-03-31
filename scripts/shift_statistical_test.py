@@ -68,7 +68,7 @@ def one_dimensional_test(X1, X2, test_type):
             c_alpha = 1.358
             n = len(feature_X1)
             m = len(feature_X2)
-            ppf = c_alpha * np.sqrt((n+m) / n*m)
+            ppf = c_alpha * np.sqrt((n+m)/(n*m))
         else:
             t_val, critical_values, p_val = anderson_ksamp([feature_X1.tolist(), feature_X2.tolist()])
             ppf = critical_values[2]

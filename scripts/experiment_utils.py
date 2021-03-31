@@ -83,7 +83,7 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
 
     ## Consider all combinations of shift intensities, shift proportion, test samples
     for shift_intensity in tqdm(shift_intensities):
-        for shift_prop in shift_props:
+        for shift_prop in tqdm(shift_props):
             for test_set_sample in test_set_samples:
                 # Repeat the experiment n_std and n_exp times for each n_std
                 for i in range(n_std):
@@ -282,7 +282,7 @@ def single_experiment(model, method, X_valid, X_test,
                                                   orig_dims[2]))
         test_concept_repr = []
         for i in range(len(concept_names)):
-            test_concept_repr.append(np.argmax(preds[i], axis=1))
+            test_concept_repr.append(np.argmax(test_preds[i], axis=1))
 
         # Prepare result
         test_statistic = {concept: None for concept in concept_names}
