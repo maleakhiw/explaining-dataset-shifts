@@ -122,7 +122,7 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
                                                                             shift_intensity, shift_prop)
                             
                             # Gold standard label = 1, since we shift the result
-                            dict_result[shift_intensity][shift_prop][test_set_sample]["true_detection_results"].append(1)
+                            dict_result[shift_intensity][shift_prop][test_set_sample]["true_detection_results"][i].append(1)
                         # Not do shift as do_shift tell us so (false-positive check)
                         else:
                             X_test_shifted = X_test_subset
@@ -130,7 +130,7 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
                             c_test_shifted = c_test_subset
 
                             # Gold standard label = 0, since we do not shift.
-                            dict_result[shift_intensity][shift_prop][test_set_sample]["true_detection_results"].append(0)
+                            dict_result[shift_intensity][shift_prop][test_set_sample]["true_detection_results"][i].append(0)
 
 
                         # Perform detection:
@@ -141,10 +141,10 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
                                                                                     num_classes, concept_names, concept_values)
 
                         # 3. Store result
-                        dict_result[shift_intensity][shift_prop][test_set_sample]["test_statistics"].append(test_statistic)
-                        dict_result[shift_intensity][shift_prop][test_set_sample]["p_vals"].append(p_val)
-                        dict_result[shift_intensity][shift_prop][test_set_sample]["detection_results"].append(detection_result)
-                        dict_result[shift_intensity][shift_prop][test_set_sample]["ppf"].append(ppf)
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["test_statistics"][i].append(test_statistic)
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["p_vals"][i].append(p_val)
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["detection_results"][i].append(detection_result)
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["ppf"][i].append(ppf)
 
     return dict_result
 
