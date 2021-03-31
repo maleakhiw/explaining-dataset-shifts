@@ -32,12 +32,12 @@ def verify_autoencoder(autoenc, X, n=10):
     """
 
     plt.figure(figsize=(20, 4))
-    decoded_imgs = autoenc(x_test).numpy()
+    decoded_imgs = autoenc(X).numpy()
 
     for i in range(n):
         # Display original image
         ax = plt.subplot(2, n, i+1)
-        plt.imshow(np.squeeze(x_test[i]))
+        plt.imshow(np.squeeze(X[i]))
         plt.title("original")
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
