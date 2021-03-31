@@ -14,7 +14,98 @@ from constants import *
 
 
 #-------------------------------------------------------------------------------
-## Shift applicator
+## Main shift applicator
+
+def apply_shift(X_test, y_test, c_test, 
+            shift_type, shift_type_params, shift_intensity, shift_prop):
+    """
+    Main shift applicator. Apply shift to X_test, y_test, and c_test.
+
+    :param X_test, y_test, c_test: test data, in which we apply shift to.
+    :param shift_type: a different type of shift. One of ShiftType in constants.py.
+    :param shift_type_params: extract shift parameter that we need to pass. For example,
+        the concept shift needed extra information, such as the class to be removed (cl)
+        or the concept index to be targeted.
+    :param shift_intensity: one of ShiftIntensity in constants.py
+    :param shift_prop: proportion of the data affected by shifts.
+
+    :return: (x_test_shifted, y_test_shifted)
+    """
+
+    # Deep copy the passed data. This is to prevent bugs.
+    X_test_shifted = deepcopy(X_test)
+    y_test_shifted = deepcopy(y_test)
+    c_test_shifted = deepcopy(c_test)
+
+    ## Apply shift accordingly
+    # Gaussian shift
+    if shift_type == ShiftType.Gaussian:
+        X_test_shifted, y_test_shifted = apply_gaussian_shift(X_test_shifted, 
+                                                        y_test_shifted, 
+                                                        shift_intensity, 
+                                                        shift_prop)
+    
+    # Knockout shift
+    elif shift_type == ShiftType.Knockout:
+        X_test_shifted, y_test_shifted = apply_ko_shift(X_test_shifted, 
+                                                    y_test_shifted, 
+                                                    shift_intensity, 
+                                                    cl=shift_type_params["cl"])
+    
+    # Image shifts
+    elif shift_type == ShiftType.All:
+        X_test_shifted, y_test_shifted = apply_img_shift(X_test_shifted, y_test_shifted, 
+                                                         shift_type_params["orig_dims"], 
+                                                         shift_intensity, shift_prop,
+                                                         shift_types=ShiftType.All)
+    
+    elif shift_type == ShiftType.Width:
+        X_test_shifted, y_test_shifted = apply_img_shift(X_test_shifted, y_test_shifted, 
+                                                         shift_type_params["orig_dims"], 
+                                                         shift_intensity, shift_prop,
+                                                         shift_types=[ShiftType.Width])
+    
+    elif shift_type == ShiftType.Height:
+        X_test_shifted, y_test_shifted = apply_img_shift(X_test_shifted, y_test_shifted, 
+                                                         shift_type_params["orig_dims"], 
+                                                         shift_intensity, shift_prop,
+                                                         shift_types=[ShiftType.Height])
+    
+    elif shift_type == ShiftType.Rotation:
+        X_test_shifted, y_test_shifted = apply_img_shift(X_test_shifted, y_test_shifted, 
+                                                         shift_type_params["orig_dims"], 
+                                                         shift_intensity, shift_prop,
+                                                         shift_types=[ShiftType.Rotation])
+    
+    elif shift_type == ShiftType.Shear:
+        X_test_shifted, y_test_shifted = apply_img_shift(X_test_shifted, y_test_shifted, 
+                                                         shift_type_params["orig_dims"], 
+                                                         shift_intensity, shift_prop,
+                                                         shift_types=[ShiftType.Shear])
+    
+    elif shift_type == ShiftType.Zoom:
+        X_test_shifted, y_test_shifted = apply_img_shift(X_test_shifted, y_test_shifted, 
+                                                         shift_type_params["orig_dims"], 
+                                                         shift_intensity, shift_prop,
+                                                         shift_types=[ShiftType.Zoom])
+    
+    elif shift_type == ShiftType.Flip:
+        X_test_shifted, y_test_shifted = apply_img_shift(X_test_shifted, y_test_shifted, 
+                                                         shift_type_params["orig_dims"], 
+                                                         shift_intensity, shift_prop,
+                                                         shift_types=[ShiftType.Flip])
+    
+    # Concept shift
+    elif shift_type == ShiftType.Concept:
+        X_test_shifted, y_test_shifted, c_test_shifted = apply_concept_shift(X_test_shifted, y_test_shifted,
+                                                             c_test_shifted, shift_type_params["concept_idx"],
+                                                             shift_intensity, shift_type_params["cl"])
+    
+    return X_test_shifted, y_test_shifted, c_test_shifted
+
+
+#-------------------------------------------------------------------------------
+## Shift applicator components
 
 def apply_gaussian_shift(X_te_orig, y_te_orig, shift_intensity, shift_prop):
     """
@@ -143,7 +234,7 @@ def apply_concept_shift(X_te_orig, y_te_orig, c_te_orig, concept_idx,
 
 
 def apply_img_shift(X_te_orig, y_te_orig, orig_dims, shift_intensity, 
-    shift_prop, shift_types=ShiftImageType.All):
+    shift_prop, shift_types=ShiftType.All):
     """
     Given a dataset (test), this function applies various image shifts to it
     
@@ -156,13 +247,13 @@ def apply_img_shift(X_te_orig, y_te_orig, orig_dims, shift_intensity,
     :param shift_prop: proportion of the data shifted, default value = 0.1, 0.5, 1.0.
     :param shift_types: list indicating shifts that we want to apply. 
         Possible shift types includes:
-        - ShiftImageType.Width: for image translation in the x-direction.
-        - ShiftImageType.Height: for image translation in the y-direction.
-        - ShiftImageType.Rotation: rotation.
-        - ShiftImageType.Shear: shear.
-        - ShiftImageType.Zoom: zoom along the x and y directions.
-        - ShiftImageType.Flip: flip in the x and y direction.
-        - ShiftImageType.All: all combination of image shifts above.
+        - ShiftType.Width: for image translation in the x-direction.
+        - ShiftType.Height: for image translation in the y-direction.
+        - ShiftType.Rotation: rotation.
+        - ShiftType.Shear: shear.
+        - ShiftType.Zoom: zoom along the x and y directions.
+        - ShiftType.Flip: flip in the x and y direction.
+        - ShiftType.All: all combination of image shifts above.
     
     :return X_te_1: shifted feature matrix.
     :return y_te_1: shifted label array.
@@ -172,7 +263,7 @@ def apply_img_shift(X_te_orig, y_te_orig, orig_dims, shift_intensity,
     y_te_1 = None
 
     ## No specific type of image shifts given
-    if shift_types == ShiftImageType.All :
+    if shift_types == ShiftType.All :
         rotation_range = ImageDataGeneratorConfig.Rotation[shift_intensity]
         width_shift_range = ImageDataGeneratorConfig.Width[shift_intensity]
         height_shift_range = ImageDataGeneratorConfig.Height[shift_intensity]
@@ -184,22 +275,22 @@ def apply_img_shift(X_te_orig, y_te_orig, orig_dims, shift_intensity,
     ## Else, select parameters accordingly
     else:
         all_shifts = [
-            ShiftImageType.Width, ShiftImageType.Height, ShiftImageType.Rotation, 
-            ShiftImageType.Shear, ShiftImageType.Zoom, ShiftImageType.Flip
+            ShiftType.Width, ShiftType.Height, ShiftType.Rotation, 
+            ShiftType.Shear, ShiftType.Zoom, ShiftType.Flip
         ]
 
         for shift_type in shift_types:
-            if shift_type == ShiftImageType.Width:
+            if shift_type == ShiftType.Width:
                 width_shift_range = ImageDataGeneratorConfig.Width[shift_intensity]
-            if shift_type == ShiftImageType.Height:
+            if shift_type == ShiftType.Height:
                 height_shift_range = ImageDataGeneratorConfig.Height[shift_intensity]
-            if shift_type == ShiftImageType.Rotation:
+            if shift_type == ShiftType.Rotation:
                 rotation_range = ImageDataGeneratorConfig.Rotation[shift_intensity]
-            if shift_type == ShiftImageType.Shear:
+            if shift_type == ShiftType.Shear:
                 shear_range = ImageDataGeneratorConfig.Shear[shift_intensity]
-            if shift_type == ShiftImageType.Zoom:
+            if shift_type == ShiftType.Zoom:
                 zoom_range = ImageDataGeneratorConfig.Zoom[shift_intensity]
-            if shift_type == ShiftImageType.Flip:
+            if shift_type == ShiftType.Flip:
                 horizontal_flip = ImageDataGeneratorConfig.Flip[shift_intensity][0]
                 vertical_flip = ImageDataGeneratorConfig.Flip[shift_intensity][1]
             
@@ -207,17 +298,17 @@ def apply_img_shift(X_te_orig, y_te_orig, orig_dims, shift_intensity,
         
         # For non-included, use default value without augmentation
         for shift_type in all_shifts:
-            if shift_type == ShiftImageType.Width:
+            if shift_type == ShiftType.Width:
                 width_shift_range = 0
-            if shift_type == ShiftImageType.Height:
+            if shift_type == ShiftType.Height:
                 height_shift_range = 0
-            if shift_type == ShiftImageType.Rotation:
+            if shift_type == ShiftType.Rotation:
                 rotation_range = 0
-            if shift_type == ShiftImageType.Shear:
+            if shift_type == ShiftType.Shear:
                 shear_range = 0
-            if shift_type == ShiftImageType.Zoom:
+            if shift_type == ShiftType.Zoom:
                 zoom_range = 0
-            if shift_type == ShiftImageType.Flip:
+            if shift_type == ShiftType.Flip:
                 horizontal_flip = False
                 vertical_flip = False
 
