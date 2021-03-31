@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 from tqdm.notebook import tqdm_notebook as tqdm
+import pickle
 
 from shift_applicator import *
 from shift_dimensionality_reductor import *
@@ -493,3 +494,44 @@ def unison_shuffled_copies(a, b, c):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
     return a[p], b[p], c[p]
+
+def save_result(shift_str, method_str, dict_result, scratch=True):
+    """
+    Used to save dict result after running the experiment.
+
+    :param shift_str: the shift type name.
+    :param method_str: the method name.
+    :param dict_result: result to be stored.
+    """
+
+    filename = f"{shift_str}_{method_str}.pickle"
+    if scratch:
+        path = f"/local/scratch/maw219/{filename}"
+    else:
+        path = f"../../results/dSprites/{filename}"
+
+    with open(path, "wb") as handle:
+        pickle.dump(dict_result, handle)
+        print("Saving successfully.")
+
+def load_result(shift_str, method_str, scratch=True):
+    """
+    Used to load pickled experimentation result.
+
+    :param shift_str: indicate the shift type name (string)
+    :param method_str: indicate the dimensionality reduction method (string)
+
+    :return: dict_result.
+    """
+
+    filename = f"{shift_str}_{method_str}.pickle"
+    if scratch:
+        path = f"/local/scratch/maw219/{filename}"
+    else:
+        path = f"../../results/dSprites/{filename}"
+
+    with open(path, "rb") as handle:
+        dict_result = pickle.load(handle)
+        print("Loading file successfully.")
+    
+    return dict_result
