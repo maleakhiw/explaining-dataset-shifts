@@ -101,6 +101,19 @@ class ImageDataGeneratorConfig:
 
 
 #-------------------------------------------------------------------------------
+## Dimensionality reductor configuration
+
+class DimensionalityReductor(Enum):
+    BBSDs = 0
+    BBSDh = 1
+    CBSDs = 2
+    CBSDh = 3
+    PCA = 4
+    SRP = 5
+    UAE = 6
+    TAE = 7
+
+#-------------------------------------------------------------------------------
 ## Statistical tests configuration
 
 class OneDimensionalTest(Enum):

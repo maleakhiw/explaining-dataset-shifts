@@ -38,7 +38,6 @@ Our shift detection pipeline comprises four step:
    - ```dSprites```: experimentation codes to generate data and visualise results of dSprites.
    - ```smallnorb```: experimentation codes to generate data and visualise results of smallnorb.
    - ```3dshapes```: experimentation codes to generate data and visualise results of 3dshapes.
-   - ```scratch```: contains old notebooks, used for unit test or prototyping.
 - ```results```: contains pickled experimentation results.
 - ```models```: contains pretrained neural network models.
 - ```scripts```: the source codes and utility functions writting fully in Python.
