@@ -29,11 +29,12 @@ class ShiftIntensity(Enum):
     Large = 2
 
 
-class ShiftImageType(Enum):
+class ShiftType(Enum):
     """
-    Constants for shift image type to be applied.
+    Constants for shift types to be applied
     """
 
+    # Image shifts
     Width = 0
     Height = 1
     Rotation = 2
@@ -42,6 +43,14 @@ class ShiftImageType(Enum):
     Flip = 5
     All = 6
 
+    # Gaussian shift
+    Gaussian = 7
+    
+    # Knockout shift
+    Knockout = 8
+
+    # Concept shift
+    Concept = 9
 
 class ImageDataGeneratorConfig:
     """
