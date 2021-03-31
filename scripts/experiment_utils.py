@@ -190,7 +190,7 @@ def single_experiment(model, method, X_valid, X_test,
                                                  orig_dims[2]))
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid, OneDimensionalTest.KS)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
@@ -253,7 +253,7 @@ def single_experiment(model, method, X_valid, X_test,
 
         # Do statistical test for each concept (one dimensional test)
         for concept, repr_valid, repr_test in zip(concept_names, valid_concept_repr, test_concept_repr):
-            p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_valid, repr_test)
+            p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_valid, repr_test, OneDimensionalTest.KS)
             alpha = alpha / repr_valid.shape[1] # Divided by number of components for Bonferroni correction
             test_statistic[concept] = t_vals
             p_val_dict[concept] = p_vals
@@ -314,7 +314,7 @@ def single_experiment(model, method, X_valid, X_test,
         repr_test = model.transform(X_test)
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid, OneDimensionalTest.KS)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
@@ -337,7 +337,7 @@ def single_experiment(model, method, X_valid, X_test,
         repr_test = model.transform(X_test)
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid, OneDimensionalTest.KS)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
@@ -365,7 +365,7 @@ def single_experiment(model, method, X_valid, X_test,
         repr_test = repr_test.numpy().reshape(repr_test.shape[0], -1)
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid, OneDimensionalTest.KS)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
