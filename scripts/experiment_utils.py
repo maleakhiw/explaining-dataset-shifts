@@ -9,7 +9,7 @@
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
-from tqdm.notebook import tqdm_notebook as tqdm
+from tqdm import tqdm
 import pickle
 
 from shift_applicator import *
@@ -83,7 +83,7 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
 
     ## Consider all combinations of shift intensities, shift proportion, test samples
     for shift_intensity in tqdm(shift_intensities):
-        for shift_prop in tqdm(shift_props):
+        for shift_prop in shift_props:
             for test_set_sample in test_set_samples:
                 # Repeat the experiment n_std and n_exp times for each n_std
                 for i in range(n_std):
