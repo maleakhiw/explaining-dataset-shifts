@@ -234,7 +234,7 @@ def apply_concept_shift(X_te_orig, y_te_orig, c_te_orig, concept_idx,
 
 
 def apply_img_shift(X_te_orig, y_te_orig, orig_dims, shift_intensity, 
-    shift_prop, shift_types=ShiftType.All):
+    shift_prop, shift_types):
     """
     Given a dataset (test), this function applies various image shifts to it
     
