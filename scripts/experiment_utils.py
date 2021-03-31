@@ -8,6 +8,8 @@
 
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -37,14 +39,14 @@ def verify_autoencoder(autoenc, X, n=10):
     for i in range(n):
         # Display original image
         ax = plt.subplot(2, n, i+1)
-        plt.imshow(np.squeeze(X[i]))
+        plt.imshow(np.squeeze(X[i]), cmap="gray")
         plt.title("original")
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
         # Display reconstruction
         ax = plt.subplot(2, n, i+1+n)
-        plt.imshow(np.squeeze(decoded_imgs[i]))
+        plt.imshow(np.squeeze(decoded_imgs[i]), cmap="gray")
         plt.title("reconstructed")
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
