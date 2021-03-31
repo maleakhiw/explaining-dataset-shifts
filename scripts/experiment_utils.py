@@ -9,6 +9,7 @@
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
+from tqdm.notebook import tqdm_notebook as tqdm
 
 from shift_applicator import *
 from shift_dimensionality_reductor import *
@@ -22,11 +23,136 @@ warnings.filterwarnings('ignore')
 #-------------------------------------------------------------------------------
 ## Data collection functions
 
+def main_experiment(model, method, X_valid, y_valid, c_valid,
+                    X_test, y_test, c_test, shift_type, orig_dims,
+                    num_classes, concept_names, concept_values,
+                    shift_type_params=None, n_exp=100, n_std=5):
+    """
+    Calculate the test statistics, p-value, and detection accuracy for a given method
+    and shift on all combinations of number of test samples, shift intensities, 
+    and proportion of test data that is affected by shift.
+
+    :param model: the dimensionality reduction that has been fitted with source data.
+    :param method: the shift detection method which can be one of those defined
+        in DimensionalityReductor in constants.py.
+        - 'BBSDs': softmax label classifier (BBSD)
+        - 'BBSDh': argmax/ hard prediction label classifier 
+        - 'CBSDs': softmax on the concept layer 
+        - 'CBSDh': argmax/ hard prediction label classifier
+        - 'PCA': used to reduce the dimension of X_valid and X_test
+        - 'SRP': used to reduce the dimension of X_valid and X_test
+        - 'UAE': Autoencoder based method to reduce the dimension of X_valid and X_test
+        - 'TAE': Autoencoder based method to reduce the dimension of X_valid and X_test
+    :param X_valid, y_valid, c_valid: validation data, which we hypothetically treat as the dataset that we have.
+    :param X_test, y_test, c_test: test data, which we hypothetically treat as unseen real-world data, where shift might occur
+    :param shift_type: shift type to be applied.
+    :param orig_dims: original dimension of the images.
+    :param num_classes: number of classes in the original task (y).
+    :param concept_names: list of concept names.
+    :param concept_values: how many possible concept values for each concept in concept_names (list).
+    :param shift_type_params: extra parameters for the shift applicator functions.
+    :param n_exp: number of experiments, which we will average on to get shift detection accuracy.
+    :param n_exp: number of repeated experiments (e.g., if total_exp = n_std * n_exp). 
+        The data for each run is used to compute confidence interval or standard deviation.
+
+    :return: a dictionary containing p-value and detection accuracy for all combination of shift intensities,
+        shift proportion, and number of test samples:
+        {
+            "shift_intensities": {
+                "shift_proportion": {
+                    "test_samples: : {
+                        "test_statistics": [],
+                        "p_vals": [],
+                        "detection_results": [],
+                        "true_detection_results": [], # the true shift detection labels
+                        "ppf": [] # inverse cdf for 95% quantile
+                    }
+                }
+            }
+        }
+    """
+
+    # Possible value of intensities, data proportion affected, test set samples
+    shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
+    shift_props = [0.1, 0.5, 1.0] # pre-defined configurations
+    test_set_samples = [10, 20, 50, 100, 200, 500, 1000, 10000] # pre-defined configurations
+
+    ## Initialise dictionary used to store result
+    dict_result = initialise_result_dictionary(shift_intensities, shift_props, test_set_samples)
+
+    ## Consider all combinations of shift intensities, shift proportion, test samples
+    for shift_intensity in tqdm(shift_intensities):
+        for shift_prop in shift_props:
+            for test_set_sample in test_set_samples:
+                # Repeat the experiment n_std and n_exp times for each n_std
+                for i in range(n_std):
+                    # Create empty list to append results for the given n_std run.
+                    dict_result[shift_intensity][shift_prop][test_set_sample]["test_statistics"].append([])
+                    dict_result[shift_intensity][shift_prop][test_set_sample]["p_vals"].append([])
+                    dict_result[shift_intensity][shift_prop][test_set_sample]["detection_results"].append([])
+                    dict_result[shift_intensity][shift_prop][test_set_sample]["true_detection_results"].append([])
+                    dict_result[shift_intensity][shift_prop][test_set_sample]["ppf"].append([])
+
+                    # For each experiment run, run n_exp times
+                    for j in range(n_exp):
+                        # Get test set
+                        X_test_subset, y_test_subset, c_test_subset = get_random_data_subset(X_test, y_test, 
+                                                                                            c_test, test_set_sample)
+
+                        # Call apply shift method on the test set if do_shift is True,
+                        # otherwise, we do not shift. This is used to prevent false
+                        # positive. The rate of non-shift examples are determined by rate.
+                        # When rate = 1, then all examples are shift examples.
+                        shift_rate = 1.0 # change this to determine how many false positive examples to add.
+                        do_shift = np.random.uniform(0, 1.0) < shift_rate
+                        if do_shift:
+                            ## If user wants to apply multiple shift, apply one at a time
+                            if isinstance(shift_type, list):
+                                X_test_shifted = X_test_subset
+                                y_test_shifted = y_test_subset
+                                c_test_shifted = c_test_subset
+                                for s, p in zip(shift_type, shift_type_params):
+                                    X_test_shifted, y_test_shifted, c_test_shifted = apply_shift(X_test_shifted, y_test_shifted, 
+                                                                                c_test_shifted, s, p, 
+                                                                                shift_intensity, shift_prop)
+                            ## Apply only single shift
+                            else:
+                                X_test_shifted, y_test_shifted, c_test_shifted = apply_shift(X_test_subset, y_test_subset, 
+                                                                            c_test_subset, shift_type, shift_type_params, 
+                                                                            shift_intensity, shift_prop)
+                            
+                            # Gold standard label = 1, since we shift the result
+                            dict_result[shift_intensity][shift_prop][test_set_sample]["true_detection_results"].append(1)
+                        # Not do shift as do_shift tell us so (false-positive check)
+                        else:
+                            X_test_shifted = X_test_subset
+                            y_test_shifted = y_test_subset
+                            c_test_shifted = c_test_subset
+
+                            # Gold standard label = 0, since we do not shift.
+                            dict_result[shift_intensity][shift_prop][test_set_sample]["true_detection_results"].append(0)
+
+
+                        # Perform detection:
+                        # 1. Get reduced representation
+                        # 2. Perform statistical test
+                        test_statistic, p_val, detection_result, ppf = single_experiment(model, method, X_valid, 
+                                                                                    X_test_shifted, orig_dims,
+                                                                                    num_classes, concept_names, concept_values)
+
+                        # 3. Store result
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["test_statistics"].append(test_statistic)
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["p_vals"].append(p_val)
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["detection_results"].append(detection_result)
+                        dict_result[shift_intensity][shift_prop][test_set_sample]["ppf"].append(ppf)
+
+    return dict_result
+
 def single_experiment(model, method, X_valid, X_test, 
                 orig_dims, num_classes, concept_names, concept_values,
                 alpha=0.05):
     """
-    This function is called from main_pipeline function. Given a single configuration 
+    This function is called from main_experiment function. Given a single configuration 
     (e.g., dimensionality reduction method, validation, and test data, 
     this function calculates p-value, test statistics, and determine if shift exists. 
     
@@ -49,7 +175,7 @@ def single_experiment(model, method, X_valid, X_test,
     :param concept_values: how many possible concept values for each concept in concept_names (list).
     :param alpha: significance test value.
 
-    :return: (test_statistic, p_val, detection_result)
+    :return: (test_statistic, p_val, detection_result, ppf). ppf is the inversed CDF of 95% of the test statistics.
     """
 
     ## BBSD Softmax
@@ -64,7 +190,7 @@ def single_experiment(model, method, X_valid, X_test,
                                                  orig_dims[2]))
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
@@ -74,6 +200,7 @@ def single_experiment(model, method, X_valid, X_test,
         # Pack result for return
         test_statistic = t_vals
         p_val = p_vals
+        ppf = ppfs
         detection_result = detection_result
     
     ## BBSD Argmax
@@ -85,7 +212,7 @@ def single_experiment(model, method, X_valid, X_test,
                                                            orig_dims[2])),
                                                            axis=1)
         
-        chi2, p_val = test_chi2_shift(repr_valid, repr_test, num_classes)
+        chi2, p_val, ppf = test_chi2_shift(repr_valid, repr_test, num_classes)
 
         if p_val < alpha:
             detection_result = 1
@@ -96,6 +223,7 @@ def single_experiment(model, method, X_valid, X_test,
         test_statistic = chi2
         p_val = p_val
         detection_result = detection_result
+        ppf = ppf
     
     ## CBSD softmax
     elif method == DimensionalityReductor.CBSDs:
@@ -121,19 +249,23 @@ def single_experiment(model, method, X_valid, X_test,
         test_statistic = {concept: None for concept in concept_names}
         p_val_dict = {concept: None for concept in concept_names}
         detection_result = {concept: None for concept in concept_names}
+        ppf_dict = {concept: None for concept in concept_names}
 
         # Do statistical test for each concept (one dimensional test)
         for concept, repr_valid, repr_test in zip(concept_names, valid_concept_repr, test_concept_repr):
-            p_val, p_vals, t_vals = one_dimensional_test(repr_valid, repr_test)
+            p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_valid, repr_test)
             alpha = alpha / repr_valid.shape[1] # Divided by number of components for Bonferroni correction
             test_statistic[concept] = t_vals
             p_val_dict[concept] = p_vals
+            ppf_dict[concept] = ppfs
+
 
             if p_val < alpha:
                 detection_result[concept] = 1
             else:
                 detection_result[concept] = 0
         p_val = p_val_dict
+        ppf = ppf_dict
     
     ## CBSD argmax
     elif method == DimensionalityReductor.CBSDh:
@@ -155,12 +287,14 @@ def single_experiment(model, method, X_valid, X_test,
         test_statistic = {concept: None for concept in concept_names}
         p_val_dict = {concept: None for concept in concept_names}
         detection_result = {concept: None for concept in concept_names}
+        ppf_dict = {concept: None for concept in concept_names}
 
         # Do statistical test for each concept (one dimensional test)
         for concept, repr_valid, repr_test, num_concept in zip(concept_names, valid_concept_repr, test_concept_repr, concept_values):
-            chi2, p_val = test_chi2_shift(repr_valid, repr_test, num_concept)
+            chi2, p_val, ppf = test_chi2_shift(repr_valid, repr_test, num_concept)
             test_statistic[concept] = chi2
             p_val_dict[concept] = p_val
+            ppf_dict[concept] = ppf
 
             if p_val < alpha:
                 detection_result[concept] = 1
@@ -168,6 +302,7 @@ def single_experiment(model, method, X_valid, X_test,
                 detection_result[concept] = 0
             
         p_val = p_val_dict
+        ppf = ppf_dict
     
     ## PCA
     elif method == DimensionalityReductor.PCA:
@@ -179,7 +314,7 @@ def single_experiment(model, method, X_valid, X_test,
         repr_test = model.transform(X_test)
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
@@ -190,6 +325,7 @@ def single_experiment(model, method, X_valid, X_test,
         test_statistic = t_vals
         p_val = p_vals
         detection_result = detection_result
+        ppf = ppfs
 
     ## SRP
     elif method == DimensionalityReductor.SRP:
@@ -201,7 +337,7 @@ def single_experiment(model, method, X_valid, X_test,
         repr_test = model.transform(X_test)
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
@@ -212,6 +348,7 @@ def single_experiment(model, method, X_valid, X_test,
         test_statistic = t_vals
         p_val = p_vals
         detection_result = detection_result
+        ppf = ppfs
     
     ## UAE and TAE
     elif method in {DimensionalityReductor.UAE, DimensionalityReductor.TAE}:
@@ -228,7 +365,7 @@ def single_experiment(model, method, X_valid, X_test,
         repr_test = repr_test.numpy().reshape(repr_test.shape[0], -1)
         
         # Do multiple univariate testing
-        p_val, p_vals, t_vals = one_dimensional_test(repr_test, repr_valid)
+        p_val, p_vals, t_vals, ppfs = one_dimensional_test(repr_test, repr_valid)
         alpha = alpha / repr_valid.shape[1] # Bonferroni correction (divide by number of components)
         if p_val < alpha:
             detection_result = 1 # there is shift
@@ -239,8 +376,9 @@ def single_experiment(model, method, X_valid, X_test,
         test_statistic = t_vals
         p_val = p_vals
         detection_result = detection_result
+        ppf = ppfs
     
-    return (test_statistic, p_val, detection_result)
+    return (test_statistic, p_val, detection_result, ppf)
 
 #-------------------------------------------------------------------------------
 ## Visualisation functions
@@ -248,6 +386,71 @@ def single_experiment(model, method, X_valid, X_test,
 
 #-------------------------------------------------------------------------------
 ## Helper functions
+
+def initialise_result_dictionary(shift_intensities, shift_props, test_set_samples):
+    """
+    Initialise dictionary used to store result of the experiments.
+
+    :param shift_intensities: all possible shift intensities
+    :param shift_props: all possible shift proportions.
+    :param test_set_samples: all possible test set samples.
+
+    :return: a dictionary containing p-value and detection accuracy for all combination of shift intensities,
+        shift proportion, and number of test samples:
+        {
+            "shift_intensities": {
+                "shift_proportion": {
+                    "test_samples: : {
+                        "test_statistics": [],
+                        "p_vals": [],
+                        "detection_results": [],
+                        "true_detection_results": [], # the true shift detection labels
+                        "ppf": [] # inverse cdf for 95% quantile
+                    }
+                }
+            }
+        }
+    """
+
+    dict_result = dict()
+
+    ## Generate empty dictionary to store results.
+    for shift_intensity in shift_intensities:
+        dict_result[shift_intensity] = dict()
+        for shift_prop in shift_props:
+            dict_result[shift_intensity][shift_prop] = dict()
+            for test_set_sample in test_set_samples:
+                dict_result[shift_intensity][shift_prop][test_set_sample] = {
+                    "test_statistics": [],
+                    "p_vals": [],
+                    "detection_results": [],
+                    "true_detection_results": [],
+                    "ppf": []
+                }
+    
+    return dict_result
+
+def get_random_data_subset(X, y, c, test_set_sample):
+    """
+    Get random (subset) of data of size test_set_sample.
+
+    :param X: the feature/ image.
+    :param y: the label.
+    :param c: the concept.
+    :param test_set_sample: number of sample in the new test set.
+
+    :return subset X, y, c.
+    """
+
+    # Random indices
+    indices = np.random.choice(X.shape[0], test_set_sample, replace=False)
+
+    # Data subsets
+    X_subset = X[indices, :]
+    y_subset = y[indices]
+    c_subset = c[indices, :]
+
+    return X_subset, y_subset, c_subset
 
 def verify_autoencoder(autoenc, X, n=10):
     """

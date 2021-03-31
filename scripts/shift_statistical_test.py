@@ -8,6 +8,7 @@
 #-------------------------------------------------------------------------------
 
 from scipy.stats import ks_2samp, binom_test, chisquare, chi2_contingency, anderson_ksamp
+from scipy.stats import chi2
 from scipy.spatial import distance
 import scipy.io
 # from torch_two_sample import *
@@ -49,6 +50,7 @@ def one_dimensional_test(X1, X2, test_type):
     """
     p_vals = []
     t_vals = []
+    ppfs = []
 
     # For each dimension we conduct a separate statistical test
     # Iterate over components
@@ -61,18 +63,26 @@ def one_dimensional_test(X1, X2, test_type):
         if test_type == OneDimensionalTest.KS:
             # Compute KS statistic and p-value
             t_val, p_val = ks_2samp(feature_X1, feature_X2)
+
+            # Best on wikipedia, the formula for ppf ks_2samp is
+            c_alpha = 1.358
+            n = len(feature_X1)
+            m = len(feature_X2)
+            ppf = c_alpha * np.sqrt((n+m) / n*m)
         else:
-            t_val, _, p_val = anderson_ksamp([feature_X1.tolist(), feature_X2.tolist()])
+            t_val, critical_values, p_val = anderson_ksamp([feature_X1.tolist(), feature_X2.tolist()])
+            ppf = critical_values[2]
 
         p_vals.append(p_val)
         t_vals.append(t_val)
+        ppfs.append(ppf)
 
     # Apply the Bonferroni correction to bound the family-wise error rate. 
     # This can be done by picking the minimum p-value from all individual tests.
     p_vals = np.array(p_vals)
     p_val = np.min(p_vals)
 
-    return p_val, p_vals, t_vals
+    return p_val, p_vals, t_vals, ppfs
 
 
 def test_chi2_shift(X1, X2, nb_classes):
@@ -111,13 +121,15 @@ def test_chi2_shift(X1, X2, nb_classes):
             i = int(i)
             val = counts_X1[i] / total_counts_X1 * total_counts_X2
             freq_exp[unique_X1[i]] = val
-        chi2, p_val = chisquare(freq_obs, f_exp=freq_exp)
+        chi, p_val = chisquare(freq_obs, f_exp=freq_exp)
+        ppf = chi2.ppf(0.95, nb_classes-1)
     else:
         # In almost all cases, we resort to obtaining a p-value from the chi-squared test's contingency table.
         freq_conc = np.array([freq_exp, freq_obs])
-        chi2, p_val, _, _ = chi2_contingency(freq_conc)
-    
-    return chi2, p_val
+        chi, p_val, dof, _ = chi2_contingency(freq_conc)
+        ppf = chi2.ppf(0.95, dof)
+
+    return chi, p_val, ppf
 
 
 # Note: we omit this for now, too slow and performances are similar to one dimensional
