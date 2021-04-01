@@ -11,6 +11,11 @@ from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pickle
+from IPython.display import display, Markdown, Latex
+import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+import matplotlib.style as style
 
 from shift_applicator import *
 from shift_dimensionality_reductor import *
@@ -19,7 +24,7 @@ from constants import *
 
 import warnings
 warnings.filterwarnings('ignore')
-
+style.use('fivethirtyeight') # Matplotlib style
 
 #-------------------------------------------------------------------------------
 ## Data collection functions
@@ -384,6 +389,146 @@ def single_experiment(model, method, X_valid, X_test,
 #-------------------------------------------------------------------------------
 ## Visualisation functions
 
+def summary_tables(list_dict_result, list_labels, list_is_concepts):
+    """
+    Generate summary table displaying shift detection accuracy for various shift type categorised
+    based on shift intensity and shift proportion.
+
+    :param list_dict_result: list of dictionary results from experimentation (see experimentation
+        for dictionary structure)
+    :param list_labels: list method names (to be used for printing purposes)
+    :param list_is_concept: indicate whether we are dealing with concept-based models or 
+        standard algorithms. They have different dict_result output.
+    """
+
+    shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
+    test_samples = [10, 20, 50, 100, 200, 500, 1000, 10000]
+    shift_props = [0.1, 0.5, 1.0]
+    
+    # Iterate over all methods and print tables
+    for dict_result, label, is_concept in zip(list_dict_result, list_labels, list_is_concepts):
+        display(Markdown(f"## Method: {label}"))
+        detection_accuracy = {sample:[] for sample in test_samples}
+
+        # Iterate over all possible combinations and capture detection accuracy
+        # MODE: SHIFT INTENSITY (rows of tables = shift intensity)
+        for sample in test_samples:
+            for shift_intensity in shift_intensities:
+                temp = []
+                for shift_prop in shift_props:
+                    detection_result = dict_result[shift_intensity][shift_prop][sample]["detection_results"][0]
+                    true_detection_result = dict_result[shift_intensity][shift_prop][sample]["true_detection_results"][0]
+                    detection_result = calculate_detection_accuracy(detection_result, true_detection_result, is_concept)
+                    temp.append(detection_result)
+                detection_accuracy[sample].append(np.mean(temp))
+        
+        # Display table
+        detection_accuracy_df = pd.DataFrame(detection_accuracy)
+        detection_accuracy_df.index = ["Small", "Medium", "Large"]
+        display(Markdown(f"*Shift intensities vs. # of samples*"))
+        display(detection_accuracy_df)
+        print("")
+        
+        # MODE: SHIFT PROPORTION
+        detection_accuracy = {sample:[] for sample in test_samples}
+        for sample in test_samples:
+            for shift_prop in shift_props:
+                temp = []
+                for shift_intensity in shift_intensities:
+                    detection_result = dict_result[shift_intensity][shift_prop][sample]["detection_results"][0]
+                    true_detection_result = dict_result[shift_intensity][shift_prop][sample]["true_detection_results"][0]
+                    detection_result = calculate_detection_accuracy(detection_result, true_detection_result, is_concept)
+                    temp.append(detection_result)
+                detection_accuracy[sample].append(np.mean(temp))
+        
+        # Display table
+        detection_accuracy_df = pd.DataFrame(detection_accuracy)
+        detection_accuracy_df.index = ["10%", "50%", "100%"]
+        display(Markdown(f"*Shift proportion vs. # of samples*"))
+        display(detection_accuracy_df)
+
+def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
+                             shift_prop=1.0):
+    """
+    Create a line plot of accuracy vs number of samples for various dimensionality
+    reductor.
+
+    :param list_dict_result: list of dict_result (pickled dictionary result of various
+        dimensionality reduction methods).
+    :param list_labels: list of method names (to be used as legend).
+    :param list_is_concepts: list of boolean indicating method that is concepts as True
+        and False respectively. Different processing depending on type.
+    :param shift_prop: the shift proportion of interest to be plotted.
+    """
+
+    shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
+    test_samples = [10, 20, 50, 100, 200, 500, 1000, 10000]
+    test_samples_display = [10, 20, 50, 100, 200, 500, 1000, 2000]
+    # Number of experiments done (see experiment/ data collection code)
+    n_std = len(list_dict_result[0][ShiftIntensity.Small][shift_prop][1000]["detection_results"])
+
+    ## Computation of detection accuracy
+    # Used to store results
+    result_storage = [{label:{shift_intensity: [] 
+                             for shift_intensity in shift_intensities} for 
+                      label in list_labels} for i in 
+                      range(n_std)]
+
+    # Iterate over supplied methods and compute detection accuracy
+    for i in range(n_std):
+        for is_concept, dict_result, label in zip(list_is_concepts, list_dict_result, list_labels):
+            for sample in test_samples:
+                for shift_intensity in shift_intensities:
+                    detection_result = dict_result[shift_intensity][shift_prop][sample]["detection_results"][i]
+                    true_detection_result = dict_result[shift_intensity][shift_prop][sample]["true_detection_results"][i]
+                    detection_result = calculate_detection_accuracy(detection_result, true_detection_result, is_concept)
+                    result_storage[i][label][shift_intensity].append(detection_result)
+    
+    ## Plot the result
+    fig = plt.figure(figsize=(20, 5), facecolor="white")
+    ax1 = fig.add_subplot(131)
+    ax2 = fig.add_subplot(132)
+    ax3 = fig.add_subplot(133)
+    
+    # Line plot 
+    for ax, shift_intensity in zip([ax1, ax2, ax3], shift_intensities):
+        for label in list_labels:
+            y = []
+            x = []
+            for i in range(n_std):
+                y.extend(result_storage[i][label][shift_intensity])
+                x.extend(test_samples_display)
+            
+            # Line plot for all methods
+            sns.lineplot(x=x, y=y, linewidth=1.5, ax=ax, err_style="band", ci=95)
+        
+        # Rename axis
+        ax.set_xlabel("Test samples", fontsize=16)
+        ax.set_ylabel("Detection accuracy", fontsize=16)
+
+        # Despine
+        ax.spines['bottom'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+
+        # Used for good tick display
+        ax.set_xticks([10, 200, 500, 1000, 2000])
+        ax.set_xticklabels([10, 200, 500, 1000, 10000]) 
+        ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])       
+        ax.tick_params(axis='both', which='major', length=5, labelsize=14)
+        ax.set_facecolor("white")
+        ax.grid(False)
+
+        for axis in ['bottom','left']:
+            ax.spines[axis].set_linewidth(1.5)
+        
+    # Display legend
+    ax1.legend(labels=list_labels, loc='center left', 
+        bbox_to_anchor=(0.95, -0.29), ncol=len(list_labels), frameon=False,
+        prop={'size': 13})
+
+    plt.show()
 
 #-------------------------------------------------------------------------------
 ## Helper functions
@@ -535,3 +680,36 @@ def load_result(shift_str, method_str, scratch=True):
         print("Loading file successfully.")
     
     return dict_result
+
+def calculate_detection_accuracy(detection_result, true_detection_result, is_concept):
+    """
+    Calculate detection accuracy.
+
+    :param detection_result: list of dictionary (is_concept=True) or list of integer (is_concept=False)
+    :param true_detection_result: list of ground truth label of shift data.
+    :param is_concept: flag indicating which method we are dealing with (BBSDs/h concepts or not)
+
+    :return: float calculating the accuracy (total number of detected / experiments)
+    """
+
+    if is_concept:
+        preds = []
+        for res in detection_result:
+            # Currently this is our decision function. We determine that
+            # shift exist if any of the concept is shifted. This can be
+            # changed in the future or optimised, e.g., using ML methods.
+            detection_value = np.any(list(res.values()))
+            preds.append(detection_value)
+    else:
+        preds = detection_result
+    
+    # Compare with ground truth and calculate accuracy
+    correct = 0
+    n = 0
+    for pred, true in zip(preds, true_detection_result):
+        if pred == true:
+            correct += 1
+        n += 1
+    
+    # Return accuracy
+    return np.mean(correct/n)
