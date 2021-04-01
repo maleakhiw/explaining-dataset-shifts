@@ -1,1 +1,4 @@
-.ipynb_checkpoints
+scripts/__pycache__
+experiments/dSprites/.ipynb_checkpoints
+**/.ipynb_checkpoints
+**/__pycache__
