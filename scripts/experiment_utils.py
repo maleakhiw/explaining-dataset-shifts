@@ -467,6 +467,10 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
     # Number of experiments done (see experiment/ data collection code)
     n_std = len(list_dict_result[0][ShiftIntensity.Small][shift_prop][1000]["detection_results"])
 
+    colors = sns.color_palette("tab10")
+    colors = [colors[i] for i in [0, 1, 2, 3, 4, 5, 6, 9]]
+
+
     ## Computation of detection accuracy
     # Used to store results
     result_storage = [{label:{shift_intensity: [] 
@@ -492,7 +496,7 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
     
     # Line plot 
     for ax, shift_intensity in zip([ax1, ax2, ax3], shift_intensities):
-        for label in list_labels:
+        for label, color in zip(list_labels, colors):
             y = []
             x = []
             for i in range(n_std):
@@ -500,11 +504,11 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
                 x.extend(test_samples_display)
             
             # Line plot for all methods
-            sns.lineplot(x=x, y=y, linewidth=1.5, ax=ax, err_style="band", ci=95)
+            sns.lineplot(x=x, y=y, linewidth=2.5, ax=ax, err_style="band", ci=95, color=color)
         
         # Rename axis
-        ax.set_xlabel("Test samples", fontsize=16)
-        ax.set_ylabel("Detection accuracy", fontsize=16)
+        ax.set_xlabel("Test samples", fontsize=18)
+        ax.set_ylabel("Detection accuracy", fontsize=18)
 
         # Despine
         ax.spines['bottom'].set_color('black')
@@ -516,7 +520,7 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
         ax.set_xticks([10, 200, 500, 1000, 2000])
         ax.set_xticklabels([10, 200, 500, 1000, 10000]) 
         ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])       
-        ax.tick_params(axis='both', which='major', length=5, labelsize=14)
+        ax.tick_params(axis='both', which='major', length=5, labelsize=16)
         ax.set_facecolor("white")
         ax.grid(False)
 
@@ -524,9 +528,13 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
             ax.spines[axis].set_linewidth(1.5)
         
     # Display legend
-    ax1.legend(labels=list_labels, loc='center left', 
-        bbox_to_anchor=(0.95, -0.29), ncol=len(list_labels), frameon=False,
-        prop={'size': 13})
+    leg = ax1.legend(labels=list_labels, loc='center left', 
+        bbox_to_anchor=(0.95, -0.29), ncol=4, frameon=False,
+        prop={'size': 20})
+    
+
+    for line in leg.legendHandles:
+        line.set_linewidth(7.0)
 
     plt.show()
 
