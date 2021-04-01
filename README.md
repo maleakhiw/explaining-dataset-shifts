@@ -40,7 +40,7 @@ Our shift detection pipeline comprises four step:
    - ```3dshapes```: experimentation codes to generate data and visualise results of 3dshapes.
 - ```results```: contains pickled experimentation results.
 - ```models```: contains pretrained neural network models.
-- ```scripts```: the source codes and utility functions writting fully in Python.
+- ```scripts```: the source codes and utility functions written fully in Python.
 
 ## Setup:
 ```bash
