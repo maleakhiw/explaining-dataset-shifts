@@ -489,7 +489,7 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
                     result_storage[i][label][shift_intensity].append(detection_result)
     
     ## Plot the result
-    fig = plt.figure(figsize=(20, 5), facecolor="white")
+    fig = plt.figure(figsize=(20, 6), facecolor="white")
     ax1 = fig.add_subplot(131)
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
@@ -504,7 +504,7 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
                 x.extend(test_samples_display)
             
             # Line plot for all methods
-            sns.lineplot(x=x, y=y, linewidth=2.5, ax=ax, err_style="band", ci=95, color=color)
+            sns.lineplot(x=x, y=y, linewidth=3, ax=ax, err_style="band", ci=95, color=color)
         
         # Rename axis
         ax.set_xlabel("Test samples", fontsize=18)
@@ -537,6 +537,111 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
         line.set_linewidth(7.0)
 
     plt.show()
+
+def barplot_test_statistics(dict_result_cbsds, dict_result_cbsdh, concept_names, 
+                                   list_shift_intensity, list_shift_prop, 
+                                   list_test_sample):
+    """
+    Plot combinations of barplot to show how significant a concept is shifted.
+    This function plots a single configuration as specified by shift_intensity, shift_prop,
+    and test_sample.
+
+    ### IMPORTANT: only used this function for CBSDs and CBSDh
+
+    :param dict_result_cbsds: dictionary containing pickled results (see experimentation codes).
+    :param dict_result_cbsdh: dictionary containing pickled results (see experimentation codes).
+    :param concept_names: list of available concepts.
+    :param list_shift_intensity: ShiftIntensity.Small, ShiftIntensity.Medium, or ShiftIntensity.Large
+    :param list_shift_prop: 0.1, 0.5, or 1.0
+    :param list_test_sample: 10, 20, 50, 100, 200, 500, 1000, or 10000
+    """
+
+    for shift_intensity in list_shift_intensity:
+        for shift_prop in list_shift_prop:
+            for test_sample in list_test_sample:
+
+                ## Display setting configurations
+                if shift_intensity == ShiftIntensity.Small:
+                    shift_intensity_str = "Small"
+                elif shift_intensity == ShiftIntensity.Medium:
+                    shift_intensity_str = "Medium"
+                else:
+                    shift_intensity_str = "Large"
+                print()
+                print(f"Shift intensity: {shift_intensity_str}")
+                print(f"Shift proportion: {shift_prop}")
+                print(f"# test samples: {test_sample}")
+
+                # Store results
+                test_statistics_cbsds = []
+                test_statistics_cbsdh = []
+
+                # For storing ppf data or critical value
+                critical_value_cbsds = []
+                critical_value_cbsdh = []
+
+                # For storing detection outcome
+                detections_cbsds = []
+                detections_cbsdh = []
+
+                # Calculate test statistic for each concept
+                for concept in concept_names:
+                    ## CBSDs
+                    test_statistics = dict_result_cbsds[shift_intensity][shift_prop][test_sample]["test_statistics"][0][0]
+                    critical_values = dict_result_cbsds[shift_intensity][shift_prop][test_sample]["ppf"][0][0]
+                    detection = dict_result_cbsds[shift_intensity][shift_prop][test_sample]["detection_results"][0][0]
+                    max_stats = max(test_statistics[concept]) # take the maximum test statistics
+                    max_crit = critical_values[concept][np.argmax(test_statistics[concept])]
+
+                    # Append data
+                    test_statistics_cbsds.append(max_stats)
+                    critical_value_cbsds.append(max_crit)
+                    detections_cbsds.append(detection)
+
+                    ## CBSDh
+                    test_statistics = dict_result_cbsdh[shift_intensity][shift_prop][test_sample]["test_statistics"][0][0]
+                    critical_values = dict_result_cbsdh[shift_intensity][shift_prop][test_sample]["ppf"][0][0]
+                    detection = dict_result_cbsdh[shift_intensity][shift_prop][test_sample]["detection_results"][0][0]
+                    # Append data
+                    test_statistics_cbsdh.append(test_statistics[concept])
+                    critical_value_cbsdh.append(critical_values[concept])
+                    detections_cbsdh.append(detection[concept])
+
+                # Draw barplot
+                fig = plt.figure(figsize=(6, 4), facecolor="white")
+                ax = fig.add_subplot(111)
+                
+                d = {
+                    "CBSDs": concept_shift_score(test_statistics_cbsds, detections_cbsds),
+                    "CBSDh": concept_shift_score(test_statistics_cbsdh, detections_cbsdh)
+                }
+
+                # Plot
+                pd.DataFrame(d).plot(kind="bar", ax=ax)
+                handles, labels = ax.get_legend_handles_labels()
+                leg = ax.legend(handles=handles[0:], loc='center left', 
+                        bbox_to_anchor=(0.20, 1.09), ncol=2, frameon=False,
+                        prop={'size': 14})
+
+                for line in leg.legendHandles:
+                    line.set_linewidth(6.0)
+                
+                # Label
+                ax.set_ylabel('Concept shift score', fontsize=16)
+                ax.set_facecolor("white")
+                # Ticks
+                ax.tick_params(axis='both', which='major', labelsize=14)
+                ax.set_xticklabels([c.capitalize() for c in concept_names], rotation=0)
+                # Despine
+                for axis in ['top','bottom','left','right']:
+                    ax.spines[axis].set_linewidth(0)
+                # Grid
+                ax.xaxis.grid(False)
+                ax.yaxis.grid(True)
+                ax.spines['bottom'].set_color("#CBCBCB")
+                ax.spines['bottom'].set_linewidth(1)
+                
+                plt.show()
 
 #-------------------------------------------------------------------------------
 ## Helper functions
@@ -721,3 +826,29 @@ def calculate_detection_accuracy(detection_result, true_detection_result, is_con
     
     # Return accuracy
     return np.mean(correct/n)
+
+def concept_shift_score(test_statistics, detection_results):
+    """
+    Calculate the concept shift score that is defined in the paper. Intuitively,
+    it normalise the test statistics of a concept against all shifted concepts.
+    We apply indicator function to ensure that non-shifted concept has value of 0.
+
+    :param test_statistics: list of test statistics for all concepts.
+    :param detection_results: list of detection results.
+    """
+
+    idx_shifted = []
+    for i, detect in enumerate(detection_results):
+        if detect:
+            idx_shifted.append(i)
+    
+    denominator = np.sum([t for t in np.array(test_statistics)[idx_shifted]])
+
+    css = []
+    for test_statistic, detect in zip(test_statistics, detection_results):
+        if not detect:
+            css.append(0)
+        else:
+            css.append(test_statistic / denominator)
+    
+    return css
