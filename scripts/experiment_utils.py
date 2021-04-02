@@ -113,13 +113,13 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
                         do_shift = np.random.uniform(0, 1.0) < shift_rate
                         if do_shift:
                             ## If user wants to apply multiple shift, apply one at a time
-                            if isinstance(shift_type, list):
+                            if isinstance(shift_type_params, list):
                                 X_test_shifted = X_test_subset
                                 y_test_shifted = y_test_subset
                                 c_test_shifted = c_test_subset
-                                for s, p in zip(shift_type, shift_type_params):
+                                for param in shift_type_params:
                                     X_test_shifted, y_test_shifted, c_test_shifted = apply_shift(X_test_shifted, y_test_shifted, 
-                                                                                c_test_shifted, s, p, 
+                                                                                c_test_shifted, shift_type, param, 
                                                                                 shift_intensity, shift_prop)
                             ## Apply only single shift
                             else:
@@ -468,7 +468,14 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
     n_std = len(list_dict_result[0][ShiftIntensity.Small][shift_prop][1000]["detection_results"])
 
     colors = sns.color_palette("tab10")
-    colors = [colors[i] for i in [0, 1, 2, 3, 4, 5, 6, 9]]
+    colors = ["#30a2da",
+        "#fc4f30",
+        "#e5ae38",
+        "#6d904f",
+        "#8b8b8b", 
+        colors[6],
+        colors[8],
+        colors[9]]
 
 
     ## Computation of detection accuracy
@@ -642,6 +649,116 @@ def barplot_test_statistics(dict_result_cbsds, dict_result_cbsdh, concept_names,
                 ax.spines['bottom'].set_linewidth(1)
                 
                 plt.show()
+
+def parallel_coordinate_p_values(list_shift_types, list_shift_types_str, list_dict_result, 
+                        list_methods, list_is_concepts):
+    """
+    Create a parallel coordinate plot of p-values for all configurations.
+
+    :param list_shift_types: list of shift types (one of ShiftType in constants.py).
+    :param list_shift_types_str: string to be used as string in the plot.
+    :param list_dict_result: list of dict_result (pickled experimentation results).
+    :param list_methods: list of method names (to be used as legend).
+    :param list_is_concepts: list of boolean indicating method that is concepts as True
+        and False respectively.
+    """
+
+    shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
+    shift_props = [0.1, 0.5, 1.0]
+    test_samples = [10, 20, 50, 100, 200, 500, 1000, 10000]
+    shift_intensities_str = ["small", "medium", "large"]
+
+    ## Used to store data (list of rows of df)
+    columns = ["shift_type", "method", "shift_intensity", 
+               "shift_prop", "test_samples", "p_value"]
+    data = []
+
+    ## Process the result dictionary, generate data to be inputted to dataframe
+    for shift_type_str, shift_type in zip(list_shift_types_str, list_shift_types):
+        for is_concept, dict_result, method in zip(list_is_concepts, list_dict_result, list_methods):
+            for sample in test_samples:
+                for shift_intensity_str, shift_intensity in zip(shift_intensities_str, shift_intensities):
+                    for shift_prop in shift_props:
+                        # Get p-value
+                        p_value = dict_result[shift_intensity][shift_prop][sample]["p_vals"][0]
+                        p_value = calculate_p_value(p_value, is_concept)
+
+                        # Aggregate data
+                        row = [shift_type_str, method, shift_intensity_str, shift_prop, sample, p_value]
+                        data.append(row)
+
+    df = pd.DataFrame(data, columns=columns)
+
+    ## Map to value
+    df["shift_type"] = df["shift_type"].map({"ko": 0.5})
+    df["method"] = df["method"].map({"CBSDs":0.125, 
+                                     "CBSDh": 0.25,
+                                     "UAE": 0.375,
+                                     "TAE": 0.5,
+                                     "BBSDs": 0.625,
+                                     "BBSDh": 0.75,
+                                     "PCA": 0.875,
+                                     "SRP": 1.0})
+    df["shift_intensity"] = df["shift_intensity"].map({"small": 0.2,
+                                                       "medium": 0.5,
+                                                       "large": 0.8})
+    df["shift_prop"] = df["shift_prop"].map({0.1: 0.2,
+                                             0.5: 0.5,
+                                            1.0: 0.8})
+    df["test_samples"] = df["test_samples"].map({10: 0.125, 
+                                                 20:0.25, 
+                                                 50:0.375, 
+                                                 100:0.5, 
+                                                 200:0.625, 
+                                                 500:0.750, 
+                                                 1000:0.875, 
+                                                 10000:1.0})
+
+
+    ## Parallel coordinate plot
+    fig = go.Figure(data=
+        go.Parcoords(
+            line = dict(color = df["p_value"],
+                        colorscale = "electric",
+                        showscale = True,
+                        cmin = 0,
+                        cmax = 0.7),
+                dimensions = list([
+                    dict(range = [0,1],
+                        tickvals = [0.5],
+                        ticktext=list_shift_types_str,
+                        label = 'Shift type', values=df["shift_type"]),
+                    dict(range = [0,1],
+                        tickvals = [0.2,0.5, 0.8],
+                        ticktext=shift_intensities_str,
+                        label = 'Shift intensity', values=df['shift_intensity']),
+                    dict(range = [0,1],
+                        tickvals = [0.2,0.5,0.8],
+                        ticktext=shift_props,
+                        label = 'Shift proportion', values=df['shift_prop']),
+                    dict(range = [0,1],
+                        tickvals = [0.125,0.25,0.375,0.5,0.625,0.750,0.875, 1.0],
+                        ticktext=test_samples,
+                        label = '# Test samples', values = df['test_samples']),
+                    dict(range = [0,1],
+                        tickvals = [0.125,0.25,0.375,0.5,0.625,0.750,0.875, 1.0],
+                        ticktext=list_methods,
+                        label = 'Methods', values=df["method"]),
+                    dict(range = [0, 0.7],
+                        label = 'P-value', values = df['p_value'])
+                ])
+        )
+                   )
+
+    fig.update_layout(
+        plot_bgcolor = 'white',
+        paper_bgcolor = 'white',
+        font_size=15,
+        width=1000,
+        height=500,
+    )
+    fig.show()
+    
 
 #-------------------------------------------------------------------------------
 ## Helper functions
@@ -852,3 +969,35 @@ def concept_shift_score(test_statistics, detection_results):
             css.append(test_statistic / denominator)
     
     return css
+
+def calculate_p_value(p_value, is_concept):
+    """
+    Calculate p-value.
+
+    :param p_value: list of dictionary (is_concept = True) or list of integer (is_concept = False)
+    :param is_concept: flag indicating if we are dealing with CBSD-based methods?
+
+    :return: p-value
+    """
+
+    p_val = []
+    if is_concept:
+        for p in p_value:
+            # p is dictionary {'scale': array([0.45355469, 0.28896944, 0.37206274, 0.50821954, 0.40829467, 0.4794184 ]}
+            min_p_concepts = []
+            for key, value in p.items():
+                try:
+                    min_p_concepts.append(min(p[key]))
+                except:
+                    min_p_concepts.append(p[key])
+            
+            p_val.append(min(min_p_concepts))
+    
+    else:
+        for p in p_value:
+            try:
+                p_val.append(min(p))
+            except:
+                p_val.append(p)
+            
+    return np.mean(p_val)
