@@ -11,3 +11,4 @@ tensorflow==2.4.1
 tensorflow-estimator==2.4.0
 torch
 tqdm
+plotly

@@ -132,3 +132,16 @@ class Dataset(Enum):
     DSPRITES = 0
     SHAPES3D = 1
     SMALLNORB = 2
+
+class DatasetTask(Enum):
+    """
+    Constants representing dataset tasks.
+
+    Task1: predict one of the concepts as the end task.
+    Task2: predict two combinations of concepts as the end task.
+    Task3: predict binary category of a concept.
+    """
+
+    Task1 = 0 
+    Task2 = 1 
+    Task3 = 2 

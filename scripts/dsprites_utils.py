@@ -18,12 +18,14 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
+from constants import *
 
 #-------------------------------------------------------------------------------
 ## Load
 
-def load_dsprites(path, dataset_size_used, train_size=0.85, class_index=1):
+def load_dsprites(path, dataset_size_used, task, train_size=0.85, class_index=1):
     """
     Load dSprites dataset, split into train, validation, and test sets.
 
@@ -40,18 +42,45 @@ def load_dsprites(path, dataset_size_used, train_size=0.85, class_index=1):
 
     # Extract relevant datas from the zip file
     imgs = dataset_zip["imgs"] # contains image data (737280 x 64 x 64)
-    latents_values = dataset_zip['latents_values'] 
-        # values of latent factors (or in this case concepts)
     latents_classes = dataset_zip['latents_classes'] 
         # classification targets (integer index of latents_values)
 
     # Select data that will be used
     indices_sampled = np.random.randint(0, imgs.shape[0], dataset_size_used)
     X = np.expand_dims(imgs, axis=-1).astype(('float32'))
-    y = latents_classes[:, class_index] # shape for task 1
+    
+    ## Get the y label, we defined multiple tasks below:
+    # TASK 1: predict one of the concept as the end task
+    if task == DatasetTask.Task1:
+      y = latents_classes[:, class_index][indices_sampled]
+    # TASK 2: predict combination of concepts as the end task
+    elif task == DatasetTask.Task2:
+      y1 = latents_classes[:, class_index[0]][indices_sampled]
+      y2 = latents_classes[:, class_index[1]][indices_sampled]
+      y = []
+      for  i, j in zip(y1, y2):
+        y.append(f"{i}_{j}")
+      
+      # Encode
+      le = LabelEncoder()
+      y = le.fit_transform(y)
+    # TASK 3: predict binary value - we further fine-grained the task by
+    # grouping the original labels into two bins.
+    else:
+      y = latents_classes[:, class_index][indices_sampled]
+      n_elements = len(np.unique(y)) // 2 # number of elements in a bin
+      bin1_classes = np.random.choice(np.unique(y), n_elements, replace=False)
+
+      new_y = []
+      for el in y:
+          if el in bin1_classes:
+              new_y.append(0)
+          else:
+              new_y.append(1)
+      y = new_y
+                
     c = latents_classes # concepts
     X = X[indices_sampled]
-    y = y[indices_sampled]
     c = c[indices_sampled]
 
     # Split X (image), y (shape for task 1), concepts to train test sets

@@ -31,6 +31,7 @@ Our shift detection pipeline comprises four step:
 - TensorFlow 2
 - torch
 - h5py
+- plotly
 
 ## Folder Structure:
 - ```data```: contains datasets used for experimentation.
