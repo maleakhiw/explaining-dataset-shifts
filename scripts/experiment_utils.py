@@ -620,7 +620,7 @@ def barplot_test_statistics(dict_result_cbsds, dict_result_cbsdh, concept_names,
                 pd.DataFrame(d).plot(kind="bar", ax=ax)
                 handles, labels = ax.get_legend_handles_labels()
                 leg = ax.legend(handles=handles[0:], loc='center left', 
-                        bbox_to_anchor=(0.20, 1.09), ncol=2, frameon=False,
+                        bbox_to_anchor=(0.20, 1.12), ncol=2, frameon=False,
                         prop={'size': 14})
 
                 for line in leg.legendHandles:
