@@ -452,7 +452,6 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
     """
     Create a line plot of accuracy vs number of samples for various dimensionality
     reductor.
-
     :param list_dict_result: list of dict_result (pickled dictionary result of various
         dimensionality reduction methods).
     :param list_labels: list of method names (to be used as legend).
@@ -464,8 +463,6 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
     shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
     test_samples = [10, 20, 50, 100, 200, 500, 1000, 10000]
     test_samples_display = [10, 20, 50, 100, 200, 500, 1000, 2000]
-    # Number of experiments done (see experiment/ data collection code)
-    n_std = len(list_dict_result[0][ShiftIntensity.Small][shift_prop][1000]["detection_results"])
 
     colors = sns.color_palette("tab10")
     colors = ["#30a2da",
@@ -479,21 +476,30 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
 
 
     ## Computation of detection accuracy
-    # Used to store results
-    result_storage = [{label:{shift_intensity: [] 
-                             for shift_intensity in shift_intensities} for 
-                      label in list_labels} for i in 
-                      range(n_std)]
+    result_storage = {
+        label: {
+            shift_intensity: [] for shift_intensity in shift_intensities
+        } for label in list_labels
+    }
 
     # Iterate over supplied methods and compute detection accuracy
-    for i in range(n_std):
-        for is_concept, dict_result, label in zip(list_is_concepts, list_dict_result, list_labels):
+    for is_concept, dict_result, label in zip(list_is_concepts, list_dict_result, list_labels):
+        n_std = len(dict_result[ShiftIntensity.Small][shift_prop][1000]["detection_results"])
+
+        for n in range(n_std):
+            # Temporary storage
+            storage = {shift_intensity: [] for shift_intensity in shift_intensities}
+            # Get results
             for sample in test_samples:
                 for shift_intensity in shift_intensities:
-                    detection_result = dict_result[shift_intensity][shift_prop][sample]["detection_results"][i]
-                    true_detection_result = dict_result[shift_intensity][shift_prop][sample]["true_detection_results"][i]
-                    detection_result = calculate_detection_accuracy(detection_result, true_detection_result, is_concept)
-                    result_storage[i][label][shift_intensity].append(detection_result)
+                    detection_result = dict_result[shift_intensity][shift_prop][sample]["detection_results"][n]
+                    true_detection_result = dict_result[shift_intensity][shift_prop][sample]["true_detection_results"][n]
+                    detection_result = calculate_detection_accuracy(detection_result, true_detection_result, is_concept) # float
+                    storage[shift_intensity].append(detection_result)
+            
+            # Store to main storage
+            for shift_intensity in shift_intensities:
+                result_storage[label][shift_intensity].append(storage[shift_intensity])
     
     ## Plot the result
     fig = plt.figure(figsize=(20, 6), facecolor="white")
@@ -506,8 +512,8 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
         for label, color in zip(list_labels, colors):
             y = []
             x = []
-            for i in range(n_std):
-                y.extend(result_storage[i][label][shift_intensity])
+            for i in range(len(result_storage[label][shift_intensity])):
+                y.extend(result_storage[label][shift_intensity][i])
                 x.extend(test_samples_display)
             
             # Line plot for all methods
@@ -690,7 +696,7 @@ def parallel_coordinate_p_values(list_shift_types, list_shift_types_str, list_di
     df = pd.DataFrame(data, columns=columns)
 
     ## Map to value
-    df["shift_type"] = df["shift_type"].map({"ko": 0.5})
+    df["shift_type"] = df["shift_type"].map({"ko": 0.3, "scale": 0.7})
     df["method"] = df["method"].map({"CBSDs":0.125, 
                                      "CBSDh": 0.25,
                                      "UAE": 0.375,
@@ -725,7 +731,7 @@ def parallel_coordinate_p_values(list_shift_types, list_shift_types_str, list_di
                         cmax = 0.7),
                 dimensions = list([
                     dict(range = [0,1],
-                        tickvals = [0.5],
+                        tickvals = [0.3, 0.7],
                         ticktext=list_shift_types_str,
                         label = 'Shift type', values=df["shift_type"]),
                     dict(range = [0,1],
