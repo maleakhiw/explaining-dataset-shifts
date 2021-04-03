@@ -1,5 +1,10 @@
 # Failing Conceptually: Concept-Based Explanations of Dataset Shift
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
+
+
+
 ## Description
 Despite their remarkable performance on a wide range of visual tasks, machine learning technologies often succumb to data distribution shifts. Consequently, a range of recent work explores techniques for detecting these shifts. Unfortunately, current techniques offer no explanations about what triggers the detection of shifts, thus limiting their utility to provide actionable insights. In this work, we present **C**oncept **B**ottleneck **S**hift **D**etection (CBSD): a novel explainable shift detection method. CBSD provides explanations by identifying and ranking the degree to which high-level human-understandable concepts are affected by shifts. Using two case studies (*dSprites* and *3dshapes*), we demonstrate how CBSD can accurately detect underlying concepts that are affected by shifts and achieve higher detection accuracy compared to state-of-the-art shift detection methods.
 
