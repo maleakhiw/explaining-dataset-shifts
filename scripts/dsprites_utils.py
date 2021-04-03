@@ -77,7 +77,7 @@ def load_dsprites(path, dataset_size_used, task, train_size=0.85, class_index=1)
               new_y.append(0)
           else:
               new_y.append(1)
-      y = new_y
+      y = np.array(new_y)
                 
     c = latents_classes # concepts
     X = X[indices_sampled]
