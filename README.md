@@ -55,6 +55,9 @@ cd explaining-dataset-shifts
 pip install -r requirements.txt
 ```
 
+## Getting Started
+Source code to apply shifts, build dimensionality reductors, conduct statistical tests, and experimentation utilities are located inside ```scripts```. Using the source code, we ran experimentation using the notebooks that is located inside ```experiments```. To replicate our experiments, please install the requirements and run the notebooks. Alternatively, you can create a new script yourself and import all source codes.
+
 ## Authors:
 - Maleakhi A. Wijaya (maw219@cam.ac.uk)
 - Dmitry Kazhdan (dk525@cam.ac.uk)
