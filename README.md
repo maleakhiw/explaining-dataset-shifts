@@ -15,7 +15,7 @@ This repository contains source code of the system and experimentation results.
 
 ## Pipeline
 
-<img src="pipeline.jpg" alt="pipeline" width="700"/>
+<img src="pipeline.jpg" alt="pipeline" width="750"/>
 
 Our shift detection pipeline comprises four step:
 <ol type="A">
