@@ -451,8 +451,7 @@ def summary_tables(list_dict_result, list_labels, list_is_concepts):
         display(Markdown(f"*Shift proportion vs. # of samples*"))
         display(detection_accuracy_df)
 
-def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
-                             shift_prop=1.0):
+def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts):
     """
     Create a line plot of accuracy vs number of samples for various dimensionality
     reductor.
@@ -461,12 +460,12 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
     :param list_labels: list of method names (to be used as legend).
     :param list_is_concepts: list of boolean indicating method that is concepts as True
         and False respectively. Different processing depending on type.
-    :param shift_prop: the shift proportion of interest to be plotted.
     """
 
     shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
     test_samples = [10, 20, 50, 100, 200, 500, 1000, 10000]
     test_samples_display = [10, 20, 50, 100, 200, 500, 1000, 2000]
+    shift_proportions = [0.1, 0.5, 1.0]
 
     colors = sns.color_palette("tab10")
     colors = ["#30a2da",
@@ -488,7 +487,7 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
 
     # Iterate over supplied methods and compute detection accuracy
     for is_concept, dict_result, label in zip(list_is_concepts, list_dict_result, list_labels):
-        n_std = len(dict_result[ShiftIntensity.Small][shift_prop][1000]["detection_results"])
+        n_std = len(dict_result[ShiftIntensity.Small][1.0][1000]["detection_results"])
 
         for n in range(n_std):
             # Temporary storage
@@ -496,10 +495,13 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts,
             # Get results
             for sample in test_samples:
                 for shift_intensity in shift_intensities:
-                    detection_result = dict_result[shift_intensity][shift_prop][sample]["detection_results"][n]
-                    true_detection_result = dict_result[shift_intensity][shift_prop][sample]["true_detection_results"][n]
-                    detection_result = calculate_detection_accuracy(detection_result, true_detection_result, is_concept) # float
-                    storage[shift_intensity].append(detection_result)
+                    storage_temp = []
+                    for shift_prop in shift_proportions:
+                        detection_result = dict_result[shift_intensity][shift_prop][sample]["detection_results"][n]
+                        true_detection_result = dict_result[shift_intensity][shift_prop][sample]["true_detection_results"][n]
+                        detection_result = calculate_detection_accuracy(detection_result, true_detection_result, is_concept) # float
+                        storage_temp.append(detection_result)
+                    storage[shift_intensity].append(np.mean(storage_temp))
             
             # Store to main storage
             for shift_intensity in shift_intensities:
