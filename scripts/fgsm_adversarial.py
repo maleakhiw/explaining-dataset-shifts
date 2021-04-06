@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import tensorflow as tf
 import numpy as np
+from sklearn.metrics import classification_report
 
 
 #-------------------------------------------------------------------------------
@@ -42,6 +43,7 @@ def generate_adversarials(X_test, y_test, model, dataset_name, plot_sample,
     orig_dims = X_test.shape[1:]
     # Store the adversarial sample
     X_adversarial = np.zeros((len(X_test), np.prod(orig_dims)))
+    X_perturbations = np.zeros((len(X_test), np.prod(orig_dims)))
 
     # Turn all test set samples into adversarial samples
     for i in tqdm(range(len(X_test))):
@@ -68,11 +70,12 @@ def generate_adversarials(X_test, y_test, model, dataset_name, plot_sample,
 
         # Successful adversarial samples are written back into original matrix.
         X_adversarial[i] = np.squeeze(adversarial_sample.reshape(-1, np.prod(orig_dims))) # flatten version
+        X_perturbations[i] = np.squeeze(perturbations.reshape(-1, np.prod(orig_dims)))
 
     # Save results
     if save:
-        np.save(f"../data/adversarial_samples/X_adversarial_{dataset_name}.npy", X_adversarial)
-        np.save(f"../data/adversarial_samples/y_adversarial_{dataset_name}.npy", y_test)
+        np.save(f"../../data/adversarial_samples/X_adversarial_{dataset_name}.npy", X_adversarial)
+        np.save(f"../../data/adversarial_samples/perturbations_{dataset_name}.npy", X_perturbations)
 
 
 #-------------------------------------------------------------------------------
