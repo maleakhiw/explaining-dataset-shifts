@@ -100,10 +100,12 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
                     dict_result[shift_intensity][shift_prop][test_set_sample]["ppf"].append([])
 
                     # For each experiment run, run n_exp times
-                    for j in range(n_exp):
+                    for _ in range(n_exp):
                         # Get test set
-                        X_test_subset, y_test_subset, c_test_subset = get_random_data_subset(X_test, y_test, 
+                        X_test_subset, y_test_subset, c_test_subset, indices = get_random_data_subset(X_test, y_test, 
                                                                                             c_test, test_set_sample)
+                        if shift_type == ShiftType.Adversarial:
+                            shift_type_params["indices"] = indices
 
                         # Call apply shift method on the test set if do_shift is True,
                         # otherwise, we do not shift. This is used to prevent false
@@ -838,7 +840,7 @@ def get_random_data_subset(X, y, c, test_set_sample):
     y_subset = y[indices]
     c_subset = c[indices, :]
 
-    return X_subset, y_subset, c_subset
+    return X_subset, y_subset, c_subset, indices
 
 def verify_autoencoder(autoenc, X, n=10):
     """

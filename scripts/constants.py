@@ -52,6 +52,9 @@ class ShiftType(Enum):
     # Concept shift
     Concept = 9
 
+    # Adversarial shift
+    Adversarial = 10    
+
 class ImageDataGeneratorConfig:
     """
     Configuration for ImageDataGeneratior.

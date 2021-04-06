@@ -101,6 +101,13 @@ def apply_shift(X_test, y_test, c_test,
                                                              c_test_shifted, shift_type_params["concept_idx"],
                                                              shift_intensity, shift_type_params["cl"])
     
+    # Adversarial shift
+    elif shift_type == ShiftType.Adversarial:
+        X_test_shifted, y_test_shifted = apply_adversarial_shift(X_test_shifted, y_test_shifted,
+                                                                shift_type_params["adv_samples"],
+                                                                shift_type_params["indices"],
+                                                                shift_intensity)
+
     return X_test_shifted, y_test_shifted, c_test_shifted
 
 
@@ -143,6 +150,41 @@ def apply_gaussian_shift(X_te_orig, y_te_orig, shift_intensity, shift_prop):
     
     return (X_te_1, y_te_1)
 
+def apply_adversarial_shift(X_te_orig, y_te_orig, adv_samples, indices, shift_intensity):
+    """
+    This function apply adversarial shift to the given test dataset.
+
+    :param X_te_orig: the feature matrix which we will apply shifts.
+    :param y_te_orig: the label array which we will apply shifts.
+    :param adv_samples: all adversarial samples.
+    :param indices: original indices of test subsets to be considered.
+    :param shift_intensity: ShiftIntensity.Small, ShiftIntensity.Medium, 
+        ShiftIntensity.Large. Describe the intensity of shift to apply to the 
+        dataset.
+
+    :return X_te_1: shifted feature matrix.
+    :return y_te_1: shifted label array.
+    """
+
+    X_te_1 = deepcopy(X_te_orig)
+    y_te_1 = y_te_orig
+
+    if shift_intensity == ShiftIntensity.Large:
+        prop = 1.0
+    elif shift_intensity == ShiftIntensity.Medium:
+        prop = 0.5
+    else:
+        prop = 0.1
+
+    # Get the random indices to be considered (indices for indices)
+    indices_indices = np.random.choice(len(indices), int(np.ceil(len(indices)*prop)), replace=False)
+    
+    # Get the adversarial sample indices to be taken from the original dataset
+    indices_adv_samples = np.array(indices)[indices_indices] # can be thought of a mapping
+                                                             # to the original indices
+    X_te_1[indices_indices, :] = adv_samples[indices_adv_samples, :]
+
+    return X_te_1, y_te_1
 
 def apply_ko_shift(X_te_orig, y_te_orig, shift_intensity, cl=MAJORITY):
     """
