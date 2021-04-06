@@ -18,7 +18,7 @@ import numpy as np
 ## Adversarial generator
 
 def generate_adversarials(X_test, y_test, model, dataset_name, plot_sample,
-                        epsilon=0.1, n_plots=10):
+                        epsilon=0.1, n_plots=100, save=True):
     """
     Generate adversarial samples (using Goodfellow et al's FGSM) and store the 
     results in the GitHub repository. Under the data folder.
@@ -40,6 +40,8 @@ def generate_adversarials(X_test, y_test, model, dataset_name, plot_sample,
         X_test = X_test / 255.0
 
     orig_dims = X_test.shape[1:]
+    # Store the adversarial sample
+    X_adversarial = np.zeros((len(X_test), np.prod(orig_dims)))
 
     # Turn all test set samples into adversarial samples
     for i in tqdm(range(len(X_test))):
@@ -50,8 +52,8 @@ def generate_adversarials(X_test, y_test, model, dataset_name, plot_sample,
 
         # Draw adversarial sample if required.
         if plot_sample and i < n_plots:
-            print(f"Prediction: {model.predict(adversarial_sample.reshape((1, orig_dims[0], orig_dims[1], orig_dims[2]))).argmax()} \
-                | Truth: {model.predict(X_test[i].reshape((1, orig_dims[0], orig_dims[1], orig_dims[2]))).argmax()}")
+            print(f"After: {model.predict(adversarial_sample.reshape((1, orig_dims[0], orig_dims[1], orig_dims[2]))).argmax()} \
+                | Before: {model.predict(X_test[i].reshape((1, orig_dims[0], orig_dims[1], orig_dims[2]))).argmax()}")
 
             # Plot
             # Channel = 1
@@ -65,11 +67,13 @@ def generate_adversarials(X_test, y_test, model, dataset_name, plot_sample,
             plt.show()
 
         # Successful adversarial samples are written back into original matrix.
-        X_test[i] = np.reshape(adversarial_sample, np.prod(orig_dims)) # flatten version
+        X_adversarial[i] = np.squeeze(adversarial_sample.reshape(-1, np.prod(orig_dims))) # flatten version
 
     # Save results
-    np.save(f"../data/adversarial_samples/X_adversarial_{dataset_name}.npy", X_test)
-    np.save(f"../data/adversarial_samples/y_adversarial_{dataset_name}.npy", y_test)
+    if save:
+        np.save(f"../data/adversarial_samples/X_adversarial_{dataset_name}.npy", X_adversarial)
+        np.save(f"../data/adversarial_samples/y_adversarial_{dataset_name}.npy", y_test)
+
 
 #-------------------------------------------------------------------------------
 ## Helper functions

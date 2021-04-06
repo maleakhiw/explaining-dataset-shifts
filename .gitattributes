@@ -1,1 +1,2 @@
 results/dSprites/*.pickle filter=lfs diff=lfs merge=lfs -text
+data/adversarial_samples/*.npy filter=lfs diff=lfs merge=lfs -text
