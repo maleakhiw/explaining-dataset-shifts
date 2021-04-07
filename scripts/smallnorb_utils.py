@@ -20,6 +20,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 from constants import *
 
@@ -65,6 +66,64 @@ def load_smallnorb(files_dir):
 
     return X_data, c_data
 
+def train_test_split_smallnorb(files_dir, task, train_size=0.75, class_index=0):
+    """
+    Split the smallnorb dataset into training and testing sets.
+
+    :param files_dir: the path to the actual smallnorb files.
+    :param task: one of DatasetTask from constants.py.
+    :param train_size: size of the training set
+    """
+
+    X_data, c_data = load_smallnorb(files_dir)
+
+    ## Get the y label depending on the tasks:
+    # TASK 1: predict one of the concept as the end task
+    if task == DatasetTask.Task1:
+        y = c_data[:, class_index]
+    # TASK 2: predict combination of concepts as the end task
+    elif task == DatasetTask.Task2:
+        y1 = c_data[:, class_index[0]]
+        y2 = c_data[:, class_index[1]]
+
+        y = []
+        for i, j in zip(y1, y2):
+            y.append(f"{i}_{j}")
+
+        # Encode
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+    # TASK 3: predict binary value - we further fine-grained the task by grouping
+    # the original labels into two bins.
+    else:
+        y = c_data[:, class_index]
+        n_elements = len(np.unique(y)) // 2
+        bin1_classes = np.random.choice(np.unique(y), n_elements, replace=False)
+
+        new_y = []
+        for el in y:
+            if el in bin1_classes:
+                new_y.append(0)
+            else:
+                new_y.append(1)
+        
+        y = np.array(new_y)
+    
+    c = c_data
+    X = X_data
+    y = y
+
+    # Split image
+    X_train, X_test, y_train, y_test, c_train, c_test = train_test_split(X, y, 
+        c, train_size=train_size)
+    print('Training samples:', x_train.shape[0])
+    print('Testing samples:', x_test.shape[0])
+
+    y_train = np.array(y_train)
+    y_test = np.array(y_test)
+
+    return X_train, X_test, y_train, y_test, c_train, c_test
+    
 
 #-------------------------------------------------------------------------------
 ## Visualisation
