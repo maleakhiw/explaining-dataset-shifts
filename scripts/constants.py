@@ -14,6 +14,7 @@ from enum import Enum
 
 MAJORITY = "MAJORITY"
 DSPRITES_CONCEPT_NAMES = ["color", "shape", "scale", "rotation", "x", "y"]
+SMALLNORB_CONCEPT_NAMES = ['category', 'instance', 'elevation', 'azimuth', 'lighting']
 
 
 #-------------------------------------------------------------------------------

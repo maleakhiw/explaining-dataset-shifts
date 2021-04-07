@@ -22,6 +22,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from constants import *
 
+
 #-------------------------------------------------------------------------------
 ## Load
 
@@ -88,6 +89,9 @@ def load_dsprites(path, dataset_size_used, task, train_size=0.85, class_index=1)
         c, train_size=train_size)
     print('Training samples:', x_train.shape[0])
     print('Testing samples:', x_test.shape[0])
+
+    y_train = np.array(y_train)
+    y_test = np.array(y_test)
 
     return x_train, x_test, y_train, y_test, c_train, c_test
 
