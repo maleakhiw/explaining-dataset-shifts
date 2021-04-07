@@ -18,6 +18,8 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from copy import deepcopy
+import pandas as pd
 
 from constants import *
 
@@ -25,11 +27,11 @@ from constants import *
 #-------------------------------------------------------------------------------
 ## Load
 
-def load_smallnorb(directory_path):
+def load_smallnorb(files_dir):
     """
     Load smallnorb dataset.
 
-    :param directory_path: path to the actual file.
+    :param files_dir: path to the actual file.
 
     :return: X and concepts data.
     """
@@ -86,6 +88,7 @@ def show_images_grid(imgs_, num_images=25):
             ax.imshow(imgs_[ax_i], cmap='gray')
             ax.set_xticks([])
             ax.set_yticks([])
+            ax.axis("off")
         else:
             ax.axis('off')
 
@@ -141,20 +144,3 @@ def resize_images(integer_images):
         image = image.resize((64, 64), PIL.Image.ANTIALIAS)
         resized_images[i, :, :] = image
     return resized_images / 255.
-
-def sample_latent(size=1):
-    """
-    Used to randomly sample latent of size 'size'. Randomly sample data of size 
-    'size'.
-
-    :param size: how many random samples
-    
-    :return: sample of 'size' latents
-    """
-    
-    latents_sizes = get_latent_sizes()
-    samples = np.zeros((size, len(latents_sizes)))
-    for lat_i, lat_size in enumerate(latents_sizes):
-        samples[:, lat_i] = np.random.randint(lat_size, size=size)
-
-    return samples
