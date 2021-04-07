@@ -116,8 +116,8 @@ def train_test_split_smallnorb(files_dir, task, train_size=0.75, class_index=0):
     # Split image
     X_train, X_test, y_train, y_test, c_train, c_test = train_test_split(X, y, 
         c, train_size=train_size)
-    print('Training samples:', x_train.shape[0])
-    print('Testing samples:', x_test.shape[0])
+    print('Training samples:', X_train.shape[0])
+    print('Testing samples:', X_test.shape[0])
 
     y_train = np.array(y_train)
     y_test = np.array(y_test)
