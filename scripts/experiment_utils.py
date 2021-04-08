@@ -120,9 +120,9 @@ def main_experiment(model, method, X_valid, y_valid, c_valid,
                                 X_test_shifted = X_test_subset
                                 y_test_shifted = y_test_subset
                                 c_test_shifted = c_test_subset
-                                for i, param in enumerate(shift_type_params):
+                                for j, param in enumerate(shift_type_params):
                                     if isinstance(shift_type, list):
-                                        shift_type_current = shift_type[i]
+                                        shift_type_current = shift_type[j]
                                     else:
                                         shift_type_current = shift_type
                                     X_test_shifted, y_test_shifted, c_test_shifted = apply_shift(X_test_shifted, y_test_shifted, 
