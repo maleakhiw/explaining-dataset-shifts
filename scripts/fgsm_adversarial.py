@@ -35,11 +35,6 @@ def generate_adversarials(X_test, y_test, model, dataset_name, plot_sample,
     :param n_plots: number of adversarial plots to be saved to be drawn.
     """
 
-    # Sanity check to verify whether image has been normalised before.
-    maximum_pixel_value = np.max(X_test)
-    if maximum_pixel_value > 1.0:
-        X_test = X_test / 255.0
-
     orig_dims = X_test.shape[1:]
     # Store the adversarial sample
     X_adversarial = np.zeros((len(X_test), np.prod(orig_dims)))
