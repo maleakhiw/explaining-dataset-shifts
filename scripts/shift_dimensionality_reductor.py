@@ -15,7 +15,6 @@ from tensorflow.keras import optimizers, layers, Input, Model
 from sklearn.linear_model import LogisticRegression
 
 from constants import *
-from dsprites_utils import *
 
 
 #-------------------------------------------------------------------------------
@@ -81,7 +80,7 @@ def end_to_end_neural_network(num_classes, dataset,
     :return: the end-to-end neural network architecture.
     """
 
-    if dataset == Dataset.DSPRITES:
+    if dataset in {Dataset.SMALLNORB, Dataset.DSPRITES}:
         img_inputs = Input(shape=(64, 64, 1))
 
         # Shared layers
@@ -89,7 +88,7 @@ def end_to_end_neural_network(num_classes, dataset,
 
         # Output layer
         out = layers.Dense(num_classes, activation="softmax")(x)
-    
+
     model = tf.keras.Model(inputs=img_inputs, outputs=out)
 
     # Compile and train model
@@ -127,6 +126,7 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
     :param dataset: one of Dataset in constants.py.
     """
 
+    ## dSprites
     if dataset == Dataset.DSPRITES:
         img_inputs = Input(shape=(64, 64, 1))
 
@@ -134,7 +134,7 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
         x = SharedCNNBlock(dataset)(img_inputs)
 
         # Task specific layer
-        concepts_size = get_latent_sizes() # list describing number of possible concepts
+        concepts_size = np.array([1, 3, 6, 40, 32, 32]) # list describing number of possible concepts
 
         task_color = layers.Dense(concepts_size[0], activation="softmax", name="color")(x)
         task_shape = layers.Dense(concepts_size[1], activation="softmax", name="shape")(x)
@@ -159,13 +159,53 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
         lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
         early_stopper = EarlyStopping(min_delta=0.001, patience=10)
         epochs = 200
-        batch_size = 128
 
         histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
                         c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
                         epochs=epochs, batch_size=128,
                         validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
                         c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
+                        callbacks=[lr_reducer, early_stopper])
+
+    ## smallNORB
+    elif dataset == Dataset.SMALLNORB:
+        img_inputs = Input(shape=(64, 64, 1))
+
+        # Shared layers
+        x = SharedCNNBlock(dataset)(img_inputs)
+
+        # Task specific layer
+        concepts_size = np.array([ 5, 10,  9, 18,  6]) # list describing number of possible concepts
+
+        task_category = layers.Dense(concepts_size[0], activation="softmax", name="category")(x)
+        task_instance = layers.Dense(concepts_size[1], activation="softmax", name="instance")(x)
+        task_elevation = layers.Dense(concepts_size[2], activation="softmax", name="elevation")(x)
+        task_azimuth = layers.Dense(concepts_size[3], activation="softmax", name="azimuth")(x)
+        task_lighting = layers.Dense(concepts_size[4], activation="softmax", name="lighting")(x)
+        
+        model = tf.keras.Model(inputs=img_inputs, outputs=[task_category, task_instance, 
+                                task_elevation, task_azimuth, task_lighting])
+        
+        # Compile and train model
+        optimizer = tf.keras.optimizers.Adam(lr=1e-4, amsgrad=True)
+        model.compile(optimizer=optimizer,
+                    loss=[
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                    ], metrics=["accuracy"])
+        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+        early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+        epochs = 200
+        batch_size = 128
+
+        histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
+                        c_train[:, 3], c_train[:, 4]], 
+                        epochs=epochs, batch_size=128,
+                        validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
+                        c_valid[:, 2], c_valid[:, 3], c_valid[:, 4]]),
                         callbacks=[lr_reducer, early_stopper])
 
     # Save if specified
@@ -197,21 +237,28 @@ def autoencoder(dataset, X_train, X_val, orig_dims, train=True):
     input_img = Input(shape=orig_dims)
 
     # Define AE architecture
-    if dataset == Dataset.DSPRITES:
-        x = layers.Conv2D(16, (3, 3), activation='relu', padding='same')(input_img)
-        x = layers.MaxPooling2D((2, 2), padding="same")(x)
-        x = layers.Conv2D(8, (3, 3), activation='relu', padding='same')(x)
-        x = layers.MaxPooling2D((2, 2), padding="same")(x)
-        x = layers.Conv2D(2, (3, 3), activation='relu', padding='same')(x)
-        encoded = layers.MaxPooling2D((2, 2), padding="same")(x)
+    if dataset in {Dataset.SMALLNORB, Dataset.DSPRITES}:
+        x = layers.Conv2D(64, (3, 3), padding='same')(input_img)
+        x = layers.Activation('relu')(x)
+        x = layers.MaxPooling2D((2, 2), padding='same')(x)
+        x = layers.Conv2D(32, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
+        x = layers.MaxPooling2D((2, 2), padding='same')(x)
+        x = layers.Conv2D(16, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
+        encoded = layers.MaxPooling2D((2, 2), padding='same')(x)
 
-        x = layers.Conv2D(2, (3, 3), activation='relu', padding='same')(encoded)
+        x = layers.Conv2D(16, (3, 3), padding='same')(encoded)
+        x = layers.Activation('relu')(x)
         x = layers.UpSampling2D((2, 2))(x)
-        x = layers.Conv2D(8, (3, 3), activation='relu', padding='same')(x)
+        x = layers.Conv2D(32, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
         x = layers.UpSampling2D((2, 2))(x)
-        x = layers.Conv2D(16, (3, 3), activation='relu', padding="same")(x)
+        x = layers.Conv2D(64, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
         x = layers.UpSampling2D((2, 2))(x)
-        decoded = layers.Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
+        x = layers.Conv2D(1, (3, 3), padding='same')(x)
+        decoded = layers.Activation('sigmoid')(x)
 
     # Construct both an encoding model and a full encoding-decoding model. The first one will be used for mere
     # dimensionality reduction, while the second one is needed for training.
@@ -223,7 +270,7 @@ def autoencoder(dataset, X_train, X_val, orig_dims, train=True):
     if train:
         autoenc.fit(X.reshape(len(X), orig_dims[0], orig_dims[1], orig_dims[2]), 
                     X.reshape(len(X), orig_dims[0], orig_dims[1], orig_dims[2]),
-                    epochs=90,
+                    epochs=100,
                     batch_size=128,
                     validation_data=(X_val.reshape(len(X_val), orig_dims[0], orig_dims[1], orig_dims[2]), 
                                      X_val.reshape(len(X_val), orig_dims[0], orig_dims[1], orig_dims[2])),
@@ -273,8 +320,20 @@ class ConceptBottleneckModel:
             itc_preds = np.array([color_pred, shape_pred, scale_pred, 
                         rotation_pred, x_pred, y_pred]).T
         
-            # Concept to output prediction
-            return self.cto_model.predict_proba(itc_preds)
+        
+        elif self.dataset == Dataset.SMALLNORB:
+            preds = self.itc_model.predict(x)
+            category_pred = np.argmax(preds[0], axis=1)
+            instance_pred = np.argmax(preds[1], axis=1)
+            elevation_pred = np.argmax(preds[2], axis=1)
+            azimuth_pred = np.argmax(preds[3], axis=1)
+            lighting_pred = np.argmax(preds[4], axis=1)
+
+            itc_preds = np.array([category_pred, instance_pred, elevation_pred,
+                        azimuth_pred, lighting_pred]).T
+        
+        # Concept to output prediction
+        return self.cto_model.predict_proba(itc_preds)
 
 
 #-------------------------------------------------------------------------------
@@ -296,7 +355,7 @@ class SharedCNNBlock(layers.Layer):
 
         self.dataset = dataset
 
-        if self.dataset == Dataset.DSPRITES:
+        if self.dataset in {Dataset.SMALLNORB, Dataset.DSPRITES}:
             # Shared layers component
             self.conv1 = layers.Conv2D(64, (8, 8), strides=(2, 2), padding='same')
             self.do1 = layers.Dropout(0.3)
@@ -319,7 +378,7 @@ class SharedCNNBlock(layers.Layer):
         Given an input, return outputs after passed to the shared layers.
         """
 
-        if self.dataset == Dataset.DSPRITES:
+        if self.dataset in {Dataset.DSPRITES, Dataset.SMALLNORB}:
             x = self.conv1(input)
             x = self.do1(x)
             x = self.conv2(x)

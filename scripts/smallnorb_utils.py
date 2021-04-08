@@ -28,7 +28,7 @@ from constants import *
 #-------------------------------------------------------------------------------
 ## Load
 
-def load_smallnorb(files_dir):
+def load_smallnorb(files_dir, resize_size=64):
     """
     Load smallnorb dataset.
 
@@ -49,7 +49,7 @@ def load_smallnorb(files_dir):
         info_fname = os.path.join(files_dir, filename_template.format(splits[i], 'info'))
 
         X_data = read_binary_matrix(data_fname)
-        X_data = resize_images(X_data[:, 0])  # Resize data, and only retain data from 1 camera
+        X_data = resize_images(X_data[:, 0], resize_size=resize_size)  # Resize data, and only retain data from 1 camera
         c_cat = read_binary_matrix(cat_fname)
         c_info = read_binary_matrix(info_fname)
         c_info = np.copy(c_info)
@@ -66,7 +66,7 @@ def load_smallnorb(files_dir):
 
     return X_data, c_data
 
-def train_test_split_smallnorb(files_dir, task, train_size=0.75, class_index=0):
+def train_test_split_smallnorb(files_dir, task, train_size=0.75, class_index=0, resize_size=64):
     """
     Split the smallnorb dataset into training and testing sets.
 
@@ -75,7 +75,7 @@ def train_test_split_smallnorb(files_dir, task, train_size=0.75, class_index=0):
     :param train_size: size of the training set
     """
 
-    X_data, c_data = load_smallnorb(files_dir)
+    X_data, c_data = load_smallnorb(files_dir, resize_size=resize_size)
 
     ## Get the y label depending on the tasks:
     # TASK 1: predict one of the concept as the end task
@@ -190,16 +190,16 @@ def read_binary_matrix(filename):
     data = data.reshape(tuple(dims))
     return data
 
-def resize_images(integer_images):
+def resize_images(integer_images,resize_size=64):
     """
     Resize the image to 64*64 pixels. Also antialias the image, making it looks
     as original.
 
     :param integer_images: the images output from read_binary_matrix.
     """
-    resized_images = np.zeros((integer_images.shape[0], 64, 64))
+    resized_images = np.zeros((integer_images.shape[0], resize_size, resize_size))
     for i in range(integer_images.shape[0]):
         image = PIL.Image.fromarray(integer_images[i, :, :])
-        image = image.resize((64, 64), PIL.Image.ANTIALIAS)
+        image = image.resize((resize_size, resize_size), PIL.Image.ANTIALIAS)
         resized_images[i, :, :] = image
     return resized_images / 255.

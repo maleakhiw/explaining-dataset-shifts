@@ -133,7 +133,7 @@ def test_chi2_shift(X1, X2, nb_classes):
 
 
 # Note: we omit this for now, too slow and performances are similar to one dimensional
-#    test. Hence, not much benefits.
+#    test. Hence, not much benefits. We included in the results that we reported.
 # def multi_dimensional_test(X1, X2):
 #     """
 #     Perform MMD multi dimensional test. See paper for more details.

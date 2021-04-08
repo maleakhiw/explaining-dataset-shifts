@@ -884,7 +884,7 @@ def unison_shuffled_copies(a, b, c):
     p = np.random.permutation(len(a))
     return a[p], b[p], c[p]
 
-def save_result(shift_str, method_str, dict_result, scratch=True):
+def save_result(shift_str, method_str, dict_result, scratch=True, dataset_fname="dSprites"):
     """
     Used to save dict result after running the experiment.
 
@@ -897,13 +897,13 @@ def save_result(shift_str, method_str, dict_result, scratch=True):
     if scratch:
         path = f"/local/scratch/maw219/{filename}"
     else:
-        path = f"../../results/dSprites/{filename}"
+        path = f"../../results/{dataset_fname}/{filename}"
 
     with open(path, "wb") as handle:
         pickle.dump(dict_result, handle)
         print("Saving successfully.")
 
-def load_result(shift_str, method_str, scratch=True):
+def load_result(shift_str, method_str, scratch=True, dataset_fname="dSprites"):
     """
     Used to load pickled experimentation result.
 
@@ -917,7 +917,7 @@ def load_result(shift_str, method_str, scratch=True):
     if scratch:
         path = f"/local/scratch/maw219/{filename}"
     else:
-        path = f"../../results/dSprites/{filename}"
+        path = f"../../results/{dataset_fname}/{filename}"
 
     with open(path, "rb") as handle:
         dict_result = pickle.load(handle)
