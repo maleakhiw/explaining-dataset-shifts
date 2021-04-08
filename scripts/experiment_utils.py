@@ -16,6 +16,7 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.style as style
+import pandas as pd
 
 from shift_applicator import *
 from shift_dimensionality_reductor import *
