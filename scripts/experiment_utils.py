@@ -922,7 +922,7 @@ def load_result(shift_str, method_str, scratch=True, dataset_fname="dSprites"):
 
     with open(path, "rb") as handle:
         dict_result = pickle.load(handle)
-        print("Loading file successfully.")
+        # print("Loading file successfully.")
     
     return dict_result
 
