@@ -31,7 +31,7 @@ def show_images_grid(imgs_, num_images=25):
     # Draw images on the given grid
     for ax_i, ax in enumerate(axes):
         if ax_i < num_images:
-            ax.imshow(imgs_[ax_i], cmap='gray')
+            ax.imshow(imgs_[ax_i], cmap='Greys_r', interpolation="nearest")
             ax.set_xticks([])
             ax.set_yticks([])
             ax.axis("off")

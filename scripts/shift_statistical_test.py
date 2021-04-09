@@ -65,7 +65,7 @@ def one_dimensional_test(X1, X2, test_type):
             t_val, p_val = ks_2samp(feature_X1, feature_X2)
 
             # Best on wikipedia, the formula for ppf ks_2samp is
-            c_alpha = 1.358
+            c_alpha = 1.358 # (5% alpha)
             n = len(feature_X1)
             m = len(feature_X2)
             ppf = c_alpha * np.sqrt((n+m)/(n*m))
