@@ -17,7 +17,7 @@ from constants import *
 
 def show_images_grid(imgs_, num_images=25):
     """
-    Used to visualise dSprite image in a grid.
+    Used to visualise images in a grid.
 
     :param imgs_: images to be drawn
     :param num_images: number of images shown in the grid
