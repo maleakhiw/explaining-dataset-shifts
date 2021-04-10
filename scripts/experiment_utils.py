@@ -551,7 +551,7 @@ def plot_accuracy_vs_samples(list_dict_result, list_labels, list_is_concepts):
         
     # Display legend
     leg = ax1.legend(labels=list_labels, loc='center left', 
-        bbox_to_anchor=(0.95, -0.29), ncol=4, frameon=False,
+        bbox_to_anchor=(0.95, -0.29), ncol=int(len(list_labels)//2), frameon=False,
         prop={'size': 20})
     
 
@@ -618,7 +618,7 @@ def barplot_test_statistics(dict_result_cbsds, dict_result_cbsdh, concept_names,
                     # Append data
                     test_statistics_cbsds.append(max_stats)
                     critical_value_cbsds.append(max_crit)
-                    detections_cbsds.append(detection)
+                    detections_cbsds.append(detection[concept])
 
                     ## CBSDh
                     test_statistics = dict_result_cbsdh[shift_intensity][shift_prop][test_sample]["test_statistics"][0][0]
@@ -632,6 +632,9 @@ def barplot_test_statistics(dict_result_cbsds, dict_result_cbsdh, concept_names,
                 # Draw barplot
                 fig = plt.figure(figsize=(6, 4), facecolor="white")
                 ax = fig.add_subplot(111)
+
+                # print(detections_cbsds)
+                # print(detections_cbsdh)
                 
                 d = {
                     "CBSDs": concept_shift_score(test_statistics_cbsds, detections_cbsds),
