@@ -82,12 +82,14 @@ def end_to_end_neural_network(num_classes, dataset,
 
     if dataset in {Dataset.SMALLNORB, Dataset.DSPRITES}:
         img_inputs = Input(shape=(64, 64, 1))
+    else:
+        img_inputs = Input(shape=(64, 64, 3)) # for 3dshapes
 
-        # Shared layers
-        x = SharedCNNBlock(dataset)(img_inputs)
+    # Shared layers
+    x = SharedCNNBlock(dataset)(img_inputs)
 
-        # Output layer
-        out = layers.Dense(num_classes, activation="softmax")(x)
+    # Output layer
+    out = layers.Dense(num_classes, activation="softmax")(x)
 
     model = tf.keras.Model(inputs=img_inputs, outputs=out)
 
@@ -119,11 +121,15 @@ def end_to_end_neural_network(num_classes, dataset,
 #-------------------------------------------------------------------------------
 ## Concept bottleneck model (input-to-concept)
 
-def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None):
+def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None,
+            concepts_size=None):
     """
     Multitask neural network that is tasked to predict all concepts jointly.
 
     :param dataset: one of Dataset in constants.py.
+    :param X_train, c_train, X_valid, c_valid: training and validation data (for early stopper).
+    :param save_path: if path is specified, we will save the model, otherwise note.
+    :param concepts_size: if specified, the concepts size is used (array of possible values for each concept).
     """
 
     ## dSprites
@@ -134,7 +140,8 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
         x = SharedCNNBlock(dataset)(img_inputs)
 
         # Task specific layer
-        concepts_size = np.array([1, 3, 6, 40, 32, 32]) # list describing number of possible concepts
+        if concepts_size is None:
+            concepts_size = np.array([1, 3, 6, 40, 32, 32]) # list describing number of possible concepts
 
         task_color = layers.Dense(concepts_size[0], activation="softmax", name="color")(x)
         task_shape = layers.Dense(concepts_size[1], activation="softmax", name="shape")(x)
@@ -175,7 +182,8 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
         x = SharedCNNBlock(dataset)(img_inputs)
 
         # Task specific layer
-        concepts_size = np.array([ 5, 10,  9, 18,  6]) # list describing number of possible concepts
+        if concepts_size is None:
+            concepts_size = np.array([ 5, 10,  9, 18,  6]) # list describing number of possible concepts
 
         task_category = layers.Dense(concepts_size[0], activation="softmax", name="category")(x)
         task_instance = layers.Dense(concepts_size[1], activation="softmax", name="instance")(x)
@@ -206,6 +214,50 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None)
                         epochs=epochs, batch_size=128,
                         validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
                         c_valid[:, 2], c_valid[:, 3], c_valid[:, 4]]),
+                        callbacks=[lr_reducer, early_stopper])
+    
+    ## 3dshapes
+    else:
+        img_inputs = Input(shape=(64, 64, 3))
+
+        # Shared layers
+        x = SharedCNNBlock(dataset)(img_inputs)
+
+        # Task specific layer
+        if concepts_size is None:
+            concepts_size = np.array([10, 10,  10, 8, 4, 15]) # list describing number of possible concepts
+
+        task_floor = layers.Dense(concepts_size[0], activation="softmax", name="floor")(x)
+        task_wall = layers.Dense(concepts_size[1], activation="softmax", name="wall")(x)
+        task_object = layers.Dense(concepts_size[2], activation="softmax", name="object")(x)
+        task_scale = layers.Dense(concepts_size[3], activation="softmax", name="scale")(x)
+        task_shape = layers.Dense(concepts_size[4], activation="softmax", name="shape")(x)
+        task_orientation = layers.Dense(concepts_size[5], activation="softmax", name="orientation")(x)
+        
+        model = tf.keras.Model(inputs=img_inputs, outputs=[task_floor, task_wall, 
+                                task_object, task_scale, task_shape, task_orientation])
+        
+        # Compile and train model
+        optimizer = tf.keras.optimizers.Adam(lr=1e-4, amsgrad=True)
+        model.compile(optimizer=optimizer,
+                    loss=[
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                        tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                    ], metrics=["accuracy"])
+        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+        early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+        epochs = 200
+        batch_size = 128
+
+        histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
+                        c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
+                        epochs=epochs, batch_size=128,
+                        validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
+                        c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
                         callbacks=[lr_reducer, early_stopper])
 
     # Save if specified
@@ -259,6 +311,29 @@ def autoencoder(dataset, X_train, X_val, orig_dims, train=True):
         x = layers.UpSampling2D((2, 2))(x)
         x = layers.Conv2D(1, (3, 3), padding='same')(x)
         decoded = layers.Activation('sigmoid')(x)
+    ## 3dshapes
+    else:
+        x = layers.Conv2D(64, (3, 3), padding='same')(input_img)
+        x = layers.Activation('relu')(x)
+        x = layers.MaxPooling2D((2, 2), padding='same')(x)
+        x = layers.Conv2D(32, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
+        x = layers.MaxPooling2D((2, 2), padding='same')(x)
+        x = layers.Conv2D(16, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
+        encoded = layers.MaxPooling2D((2, 2), padding='same')(x)
+
+        x = layers.Conv2D(16, (3, 3), padding='same')(encoded)
+        x = layers.Activation('relu')(x)
+        x = layers.UpSampling2D((2, 2))(x)
+        x = layers.Conv2D(32, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
+        x = layers.UpSampling2D((2, 2))(x)
+        x = layers.Conv2D(64, (3, 3), padding='same')(x)
+        x = layers.Activation('relu')(x)
+        x = layers.UpSampling2D((2, 2))(x)
+        x = layers.Conv2D(3, (3, 3), padding='same')(x)
+        decoded = layers.Activation('sigmoid')(x)
 
     # Construct both an encoding model and a full encoding-decoding model. The first one will be used for mere
     # dimensionality reduction, while the second one is needed for training.
@@ -297,7 +372,7 @@ class ConceptBottleneckModel:
         """
 
         self.itc_model = itc_model
-        self.cto_model = cto_model
+        self.cto_model = cto_model # we assume that the concept-to-output model has predict_proba
         self.dataset = dataset
     
     def predict(self, x):
@@ -332,6 +407,18 @@ class ConceptBottleneckModel:
             itc_preds = np.array([category_pred, instance_pred, elevation_pred,
                         azimuth_pred, lighting_pred]).T
         
+        else:
+            preds = self.itc_model.predict(x)
+            floor_pred = np.argmax(preds[0], axis=1)
+            wall_pred = np.argmax(preds[1], axis=1)
+            object_pred = np.argmax(preds[2], axis=1)
+            scale_pred = np.argmax(preds[3], axis=1)
+            shape_pred = np.argmax(preds[4], axis=1)
+            orientation_pred = np.argmax(preds[5], axis=1)
+
+            itc_preds = np.array([floor_pred, wall_pred, object_pred,
+                        scale_pred, shape_pred, orientation_pred]).T
+        
         # Concept to output prediction
         return self.cto_model.predict_proba(itc_preds)
 
@@ -355,7 +442,9 @@ class SharedCNNBlock(layers.Layer):
 
         self.dataset = dataset
 
-        if self.dataset in {Dataset.SMALLNORB, Dataset.DSPRITES}:
+        # Just add an elif or else for other datasets if you with to use other
+        # CNN architectures.
+        if self.dataset in {Dataset.SMALLNORB, Dataset.DSPRITES, Dataset.SHAPES3D}:
             # Shared layers component
             self.conv1 = layers.Conv2D(64, (8, 8), strides=(2, 2), padding='same')
             self.do1 = layers.Dropout(0.3)
@@ -378,7 +467,7 @@ class SharedCNNBlock(layers.Layer):
         Given an input, return outputs after passed to the shared layers.
         """
 
-        if self.dataset in {Dataset.DSPRITES, Dataset.SMALLNORB}:
+        if self.dataset in {Dataset.DSPRITES, Dataset.SMALLNORB, Dataset.SHAPES3D}:
             x = self.conv1(input)
             x = self.do1(x)
             x = self.conv2(x)

@@ -15,7 +15,7 @@ from enum import Enum
 MAJORITY = "MAJORITY"
 DSPRITES_CONCEPT_NAMES = ["color", "shape", "scale", "rotation", "x", "y"]
 SMALLNORB_CONCEPT_NAMES = ['category', 'instance', 'elevation', 'azimuth', 'lighting']
-
+SHAPES3D_CONCEPT_NAMES = ["floor", "wall", "object", "scale", "shape", "orientation"]
 
 #-------------------------------------------------------------------------------
 ## Shift configurations
