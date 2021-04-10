@@ -74,7 +74,7 @@ def visualise_adversarial(original_images, perturb_patterns, adversarial_images,
             ax3.imshow(adv_img.reshape(orig_dims[0], orig_dims[1]), cmap="gray")
         else:
             ax1.imshow(orig_img.reshape(orig_dims[0], orig_dims[1], orig_dims[2]))
-            ax2.imshow(perturb_img.reshape(orig_dims[0], orig_dims[1]))
+            ax2.imshow(perturb_img.reshape(orig_dims[0], orig_dims[1], orig_dims[2]))
             ax3.imshow(adv_img.reshape(orig_dims[0], orig_dims[1], orig_dims[2]))
 
         ax1.set_title(f"Original: {labels_str[before_predict]}", fontsize=14)
