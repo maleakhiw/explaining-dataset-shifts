@@ -98,7 +98,7 @@ def end_to_end_neural_network(num_classes, dataset,
     epochs = 200
     lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
     early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-    batch_size = 128
+    batch_size = 64
 
     optimizer = tf.keras.optimizers.Adam(lr=1e-4, amsgrad=True)
     model.compile(loss="sparse_categorical_crossentropy",
