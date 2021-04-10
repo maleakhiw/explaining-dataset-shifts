@@ -48,10 +48,14 @@ def load_3dshapes(path, dataset_size_used):
 
     # Select data that will be used
     indices_sampled = np.random.randint(0, images.shape[0], dataset_size_used)
-    X = np.expand_dims(images, axis=-1).astype(('float32'))
+    X = images
     c = latents_classes # concepts
     X = X[indices_sampled] / 255. # normalise the image
     c = c[indices_sampled]
+
+    # Label encoder for c
+    for i in range(c.shape[1]):
+        c[:, i] = LabelEncoder().fit_transform(c[:, i])
 
     return X, c
 

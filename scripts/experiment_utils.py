@@ -633,9 +633,6 @@ def barplot_test_statistics(dict_result_cbsds, dict_result_cbsdh, concept_names,
                 fig = plt.figure(figsize=(6, 4), facecolor="white")
                 ax = fig.add_subplot(111)
 
-                # print(detections_cbsds)
-                # print(detections_cbsdh)
-                
                 d = {
                     "CBSDs": concept_shift_score(test_statistics_cbsds, detections_cbsds),
                     "CBSDh": concept_shift_score(test_statistics_cbsdh, detections_cbsdh)
