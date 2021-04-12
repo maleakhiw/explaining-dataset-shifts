@@ -149,3 +149,24 @@ class DatasetTask(Enum):
     Task1 = 0 
     Task2 = 1 
     Task3 = 2 
+
+
+#-------------------------------------------------------------------------------
+## Classifier two sample test
+
+class ClassifierTwoSampleTest(Enum):
+    """
+    Various model options for the classifier two sample tests.
+
+    FFNN: the end-to-end feedforward neural network model.
+    CBM: the concept bottleneck option.
+    CME: the concept model extraction model of the end-to-end FFNN.
+    OCSVM: the one class SVM (popular models for novelty detection).
+    LDA: linear discriminant analysis (fails gracefully when assumption about distribution is violated).
+    """
+
+    FFNN = 0
+    CBM = 1
+    CME = 2
+    OCSVM = 3
+    LDA = 4
