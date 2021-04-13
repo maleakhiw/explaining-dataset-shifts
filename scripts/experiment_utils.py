@@ -872,19 +872,6 @@ def verify_autoencoder(autoenc, X, n=10):
 
     plt.show()
 
-def unison_shuffled_copies(a, b, c):
-    """
-    Used to shuffle a, b, c together.
-
-    :param a, b, c: arrays of same length.
-
-    :return: shuffled a, b, c
-    """
-
-    assert len(a) == len(b)
-    p = np.random.permutation(len(a))
-    return a[p], b[p], c[p]
-
 def save_result(shift_str, method_str, dict_result, scratch=True, dataset_fname="dSprites"):
     """
     Used to save dict result after running the experiment.

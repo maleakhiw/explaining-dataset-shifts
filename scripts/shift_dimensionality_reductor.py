@@ -100,7 +100,6 @@ def end_to_end_neural_network(num_classes, dataset,
     early_stopper = EarlyStopping(min_delta=0.001, patience=10)
     batch_size = 64
 
-    optimizer = tf.keras.optimizers.Adam(lr=1e-4, amsgrad=True)
     model.compile(loss="sparse_categorical_crossentropy",
                             metrics=["accuracy"],
                             optimizer=optimizer)
