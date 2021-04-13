@@ -121,7 +121,7 @@ def end_to_end_neural_network(num_classes, dataset,
 ## Concept bottleneck model (input-to-concept)
 
 def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None,
-            concepts_size=None):
+            concepts_size=None, train=True):
     """
     Multitask neural network that is tasked to predict all concepts jointly.
 
@@ -129,7 +129,10 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None,
     :param X_train, c_train, X_valid, c_valid: training and validation data (for early stopper).
     :param save_path: if path is specified, we will save the model, otherwise note.
     :param concepts_size: if specified, the concepts size is used (array of possible values for each concept).
+    :param train: indicate whether to train the model or just return the architecture.
     """
+
+    histories = None # store the training epochs information.
 
     ## dSprites
     if dataset == Dataset.DSPRITES:
@@ -162,16 +165,18 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None,
                         tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                         tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
                     ], metrics=["accuracy"])
-        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
-        early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-        epochs = 200
+        
+        if train:
+            lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+            early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+            epochs = 200
 
-        histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
-                        c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
-                        epochs=epochs, batch_size=128,
-                        validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
-                        c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
-                        callbacks=[lr_reducer, early_stopper])
+            histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
+                            c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
+                            epochs=epochs, batch_size=128,
+                            validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
+                            c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
+                            callbacks=[lr_reducer, early_stopper])
 
     ## smallNORB
     elif dataset == Dataset.SMALLNORB:
@@ -203,17 +208,19 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None,
                         tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                         tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                     ], metrics=["accuracy"])
-        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
-        early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-        epochs = 200
-        batch_size = 128
+        
+        if train:
+            lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+            early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+            epochs = 200
+            batch_size = 128
 
-        histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
-                        c_train[:, 3], c_train[:, 4]], 
-                        epochs=epochs, batch_size=128,
-                        validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
-                        c_valid[:, 2], c_valid[:, 3], c_valid[:, 4]]),
-                        callbacks=[lr_reducer, early_stopper])
+            histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
+                            c_train[:, 3], c_train[:, 4]], 
+                            epochs=epochs, batch_size=128,
+                            validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
+                            c_valid[:, 2], c_valid[:, 3], c_valid[:, 4]]),
+                            callbacks=[lr_reducer, early_stopper])
     
     ## 3dshapes
     else:
@@ -247,17 +254,19 @@ def multitask_model(dataset, X_train, c_train, X_valid, c_valid, save_path=None,
                         tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                         tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                     ], metrics=["accuracy"])
-        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
-        early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-        epochs = 200
-        batch_size = 128
+        
+        if train:
+            lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+            early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+            epochs = 200
+            batch_size = 128
 
-        histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
-                        c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
-                        epochs=epochs, batch_size=128,
-                        validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
-                        c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
-                        callbacks=[lr_reducer, early_stopper])
+            histories = model.fit(x=X_train, y=[c_train[:, 0], c_train[:, 1], c_train[:, 2],
+                            c_train[:, 3], c_train[:, 4], c_train[:, 5]], 
+                            epochs=epochs, batch_size=128,
+                            validation_data=(X_valid, [c_valid[:, 0], c_valid[:, 1], 
+                            c_valid[:, 2], c_valid[:, 3], c_valid[:, 4], c_valid[:, 5]]),
+                            callbacks=[lr_reducer, early_stopper])
 
     # Save if specified
     if save_path:

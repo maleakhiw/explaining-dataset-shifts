@@ -117,6 +117,15 @@ class DimensionalityReductor(Enum):
     UAE = 6
     TAE = 7
 
+class ConceptBottleneckTraining(Enum):
+    """
+    See the concept bottleneck models paper for the difference between these
+    training approaches.
+    """
+    Independent = 0
+    Sequential = 1
+    Joint = 2
+
 #-------------------------------------------------------------------------------
 ## Statistical tests configuration
 
