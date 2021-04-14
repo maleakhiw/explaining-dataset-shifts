@@ -14,9 +14,90 @@ from tensorflow.keras import optimizers
 import numpy as np
 import pandas as pd
 import pickle
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 from constants import *
 from shift_dimensionality_reductor import *
+
+
+#-------------------------------------------------------------------------------
+## Main domain classifier
+
+def build_binary_classifier(dataset, c2st_param, X_train, y_train, c_train, X_valid, 
+                        y_valid, c_valid, training_mode, untrained_cto, orig_dims):
+    """
+    Given the c2st_param (specification of the domain classifier to be used),
+    this function will build and train the appropriate models.
+
+    :param dataset: one of Dataset in constants.py.
+    :param c2st_param: one of ClassifierTwoSampleTest.
+    :param X_train, y_train, c_train: the training data (flattened).
+    :param X_valid, y_valid, c_valid: the validation data (flattened).
+    :param training_mode: one of ConceptBottleneckTraining.
+    :param untrained_cto: untrained concept-to-output model - used for CBM.
+    :param orig_dims: original dimension of the image (e.g., 64 x 64 x 3).
+
+    :return: the trained binary classifier model.
+    """
+
+    if c2st_param == ClassifierTwoSampleTest.LDA:
+        return lda_binary_classifier(X_train, y_train)
+    
+    elif c2st_param == ClassifierTwoSampleTest.FFNN:
+        X_train = X_train.reshape(-1, orig_dims[0], orig_dims[1], orig_dims[2])
+        X_valid = X_valid.reshape(-1, orig_dims[0], orig_dims[1], orig_dims[2])
+
+        _, model = end_to_end_binary_classifier(dataset, X_train, y_train, X_valid, y_valid)
+        return model
+    
+    elif c2st_param == ClassifierTwoSampleTest.CBM:
+        X_train = X_train.reshape(-1, orig_dims[0], orig_dims[1], orig_dims[2])
+        X_valid = X_valid.reshape(-1, orig_dims[0], orig_dims[1], orig_dims[2])
+
+        model = cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train, 
+            X_valid, c_valid, y_valid, untrained_cto, path=None)
+        return model
+
+def evaluate_binary_classifier(c2st_param, model, X_test, y_test, orig_dims):
+    """
+    Given a trained model, this function evaluate its performance.
+
+    :param c2st_param: one of ClassifierTwoSampleTest from constants.py.
+    :param model: trained model.
+    :param X_test, y_test: flattened test data.
+
+    :return: accuracy score and confusion matrix
+    """
+
+    if c2st_param == ClassifierTwoSampleTest.LDA:
+        y_test_pred = model.predict(X_test)
+        acc = accuracy_score(y_test_pred, y_test)
+        cm = confusion_matrix(y_test_pred, y_test)
+    
+    elif c2st_param == ClassifierTwoSampleTest.FFNN:
+        y_test_pred = model.predict(X_test.reshape(-1, orig_dims[0],
+                                            orig_dims[1], orig_dims[2]))
+        pred = y_test_pred > 0.5
+        acc = accuracy_score(pred, y_test)
+        cm = confusion_matrix(pred, y_test)
+
+    elif c2st_param == ClassifierTwoSampleTest.CBM:
+        # If it is sequential or independent, process differently
+        if isinstance(model, ConceptBottleneckModel):
+            y_test_pred = model.predict(X_test.reshape(-1, orig_dims[0],
+                                                orig_dims[1], orig_dims[2]))
+            y_test_pred = np.argmax(y_test_pred, axis=1)
+            acc = accuracy_score(y_test_pred, y_test)
+            cm = confusion_matrix(y_test_score, y_test)
+        else:
+            preds = model.predict(X_test.reshape(-1, orig_dims[0], orig_dims[1],
+                                                orig_dims[2]))
+            y_test_pred = preds[-1]
+            pred = y_test_pred > 0.5
+            acc = accuracy_score(pred, y_test)
+            cm = confusion_matrix(pred, y_test)
+
+    return acc, cm
 
 
 #-------------------------------------------------------------------------------
@@ -37,7 +118,7 @@ def lda_binary_classifier(X_train, y_train):
     lda = LinearDiscriminantAnalysis()
     lda.fit(X_train, y_train)
 
-    return 
+    return lda
 
 def end_to_end_binary_classifier(dataset, X_train, y_train, X_valid, y_valid, 
     save_path=None):
@@ -155,6 +236,8 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
             with open(path, "wb") as handle:
                 pickle.dump(cbm, handle)
                 print("Saving CBM successfully.")
+        
+        return cbm
     
     # If sequential, train the cto model using prediction result of the itc model
     elif training_mode == ConceptBottleneckTraining.Sequential:
@@ -186,6 +269,8 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
             with open(path, "wb") as handle:
                 pickle.dump(cbm, handle)
                 print("Saving CBM successfully.")
+
+        return cbm
     
     # Else joint training with lambda = # of concepts
     else:
@@ -246,6 +331,8 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
 
         if path:
             model.save(path)
+
+        return model
 
 
 def concept_model_extraction():
