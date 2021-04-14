@@ -13,6 +13,7 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 from tensorflow.keras import optimizers
 import numpy as np
 import pandas as pd
+import pickle
 
 from constants import *
 from shift_dimensionality_reductor import *
@@ -62,7 +63,7 @@ def end_to_end_binary_classifier(dataset, X_train, y_train, X_valid, y_valid,
     x = SharedCNNBlock(dataset)(img_inputs)
 
     # Output layer
-    out = layers.Dense(1, activation="sigmoid")
+    out = layers.Dense(1, activation="sigmoid")(x)
 
     model = tf.keras.Model(inputs=img_inputs, outputs=out)
 
@@ -103,8 +104,8 @@ def one_class_svm(X_train):
 
     return svm
 
-def concept_bottleneck_model_c2st(dataset, training_mode, X_train, c_train, y_train, 
-    X_valid, c_valid, y_valid, untrained_cto, save_path=None):
+def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train, 
+    X_valid, c_valid, y_valid, untrained_cto, path=None):
     """
     Train a concept bottleneck model with training procedure as specified by
     training_mode.
@@ -112,10 +113,10 @@ def concept_bottleneck_model_c2st(dataset, training_mode, X_train, c_train, y_tr
     :param dataset: one of Dataset in constants.py.
     :param training_mode: one of the ConceptBottleneckModel training procedure,
         as specified in constants.py.
-    :param X_train, c_train, y_train: the training data.
+    :param X_train, c_train, y_train: the training data (non-flatten).
     :param X_valid, c_valid, y_valid: the validation data.
     :param untrained_cto: untrained concept-to-output model (sklearn LR or DT by default)
-    :param save_path: if specified, save model to the path.
+    :param path: if specified, save model to the path.
 
     :return: ConceptBottleneckModel in shift_dimensionality_reductor.py. Please
         see the file for the class functions.
@@ -150,7 +151,7 @@ def concept_bottleneck_model_c2st(dataset, training_mode, X_train, c_train, y_tr
 
         cbm = ConceptBottleneckModel(itc_model, cto_model, dataset)
 
-        if save_path:
+        if path:
             with open(path, "wb") as handle:
                 pickle.dump(cbm, handle)
                 print("Saving CBM successfully.")
@@ -181,7 +182,7 @@ def concept_bottleneck_model_c2st(dataset, training_mode, X_train, c_train, y_tr
 
         cbm = ConceptBottleneckModel(itc_model, cto_model, dataset)
 
-        if save_path:
+        if path:
             with open(path, "wb") as handle:
                 pickle.dump(cbm, handle)
                 print("Saving CBM successfully.")
@@ -212,7 +213,7 @@ def concept_bottleneck_model_c2st(dataset, training_mode, X_train, c_train, y_tr
         
         # Merge layers
         x = layers.concatenate(new_x)
-        out = layers.Dense(1, activation="sigmoid")
+        out = layers.Dense(1, activation="sigmoid")(x)
         outputs.append(out)
 
         model = tf.keras.Model(inputs=img_inputs, outputs=outputs)
@@ -243,8 +244,8 @@ def concept_bottleneck_model_c2st(dataset, training_mode, X_train, c_train, y_tr
                         validation_data=(X_valid, y_valid_internal),
                         callbacks=[lr_reducer, early_stopper])
 
-        if save_path:
-            model.save(save_path)
+        if path:
+            model.save(path)
 
 
 def concept_model_extraction():
