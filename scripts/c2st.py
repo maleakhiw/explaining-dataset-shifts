@@ -87,7 +87,7 @@ def domain_classifier_experiment(c2st_param, dataset, model, X_train, y_train, c
         acc, cm = evaluate_binary_classifier(c2st_param, model, X_test_new, y_test_new, orig_dims)
         dict_result["no_shift"]["accuracy"].append(acc)
         dict_result["no_shift"]["confusion_matrix"].append(cm)
-        
+
         for shift_intensity in shift_intensities:
             for shift_prop in shift_props:
                 # Select subset of tests randomly (of size as specified in the parameter)
@@ -248,5 +248,44 @@ def initialise_domain_classifier_dictionary(shift_intensities, shift_props):
         "accuracy": [],
         "confusion_matrix": []
     }
+    
+    return dict_result
+
+def save_result_dc(shift_str, dict_result, scratch=True, dataset_fname="dSprites"):
+    """
+    Used to save dict result after running the experiment.
+
+    :param shift_str: the shift type name.
+    :param dict_result: result to be stored.
+    """
+
+    filename = f"{shift_str}_domain_classifier.pickle"
+    if scratch:
+        path = f"/local/scratch/maw219/{filename}"
+    else:
+        path = f"../../results/{dataset_fname}/{filename}"
+
+    with open(path, "wb") as handle:
+        pickle.dump(dict_result, handle)
+        print("Saving successfully.")
+
+def load_result_dc(shift_str, scratch=True, dataset_fname="dSprites"):
+    """
+    Used to load pickled experimentation result.
+
+    :param shift_str: indicate the shift type name (string)
+
+    :return: dict_result.
+    """
+
+    filename = f"{shift_str}_domain_classifier.pickle"
+    if scratch:
+        path = f"/local/scratch/maw219/{filename}"
+    else:
+        path = f"../../results/{dataset_fname}/{filename}"
+
+    with open(path, "rb") as handle:
+        dict_result = pickle.load(handle)
+        # print("Loading file successfully.")
     
     return dict_result
