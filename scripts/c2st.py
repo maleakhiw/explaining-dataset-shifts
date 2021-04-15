@@ -139,8 +139,7 @@ def summary_tables_dc(list_dict_result, list_labels):
     for dict_result, label in zip(list_dict_result, list_labels):
         display(Markdown(f"## Method: {label}"))
 
-        print(f"No-shift accuracy: {np.mean(dict_result['no_shift']['accuracy'])}\
-            /{np.std(dict_result['no_shift']['accuracy'])}")
+        print(f"No-shift accuracy: {round(np.mean(dict_result['no_shift']['accuracy']), 2)}/{round(np.std(dict_result['no_shift']['accuracy']), 2)}")
 
         # [[0.1, 0.5, 1.0], [0.1, 0.5, 1.0]]
         accuracy = []
@@ -150,7 +149,7 @@ def summary_tables_dc(list_dict_result, list_labels):
             for shift_prop in shift_props:
                 acc = np.mean(dict_result[shift_intensity][shift_prop]["accuracy"])
                 std = np.std(dict_result[shift_intensity][shift_prop]["accuracy"])
-                temp.append(f"{acc}/{std}")
+                temp.append(f"{round(acc, 2)}/{round(std, 2)}")
             accuracy.append(temp)
         
         # Display table
@@ -208,7 +207,7 @@ def barplot_accuracy_domain_classifier(list_dict_result, list_labels):
 
     # Draw the bar plot
     sns.catplot(x="intensity", y="accuracy", hue="method", col="proportion",
-        data=df_dict_plot, kind="bar", height=4, aspect=.7)
+        data=df_dict_plot, kind="bar", height=4, aspect=.7, ci=None)
 
     plt.show()
 

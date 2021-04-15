@@ -163,7 +163,7 @@ def end_to_end_binary_classifier(dataset, X_train, y_train, X_valid, y_valid,
                         epochs=epochs,
                         batch_size=batch_size,
                         validation_data=(X_valid, y_valid),
-                        callbacks=[lr_reducer, early_stopper])
+                        callbacks=[lr_reducer, early_stopper], verbose=0)
 
     # Save if specified
     if save_path:
@@ -225,7 +225,7 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         itc_model.fit(x=X_train, y=y_train_internal, 
                             epochs=epochs, batch_size=batch_size,
                             validation_data=(X_valid, y_valid_internal),
-                            callbacks=[lr_reducer, early_stopper])
+                            callbacks=[lr_reducer, early_stopper], verbose=0)
         
         # Train the cto model
         cto_model.fit(c_train, y_train)
@@ -254,7 +254,7 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         itc_model.fit(x=X_train, y=y_train_internal, 
                             epochs=epochs, batch_size=batch_size,
                             validation_data=(X_valid, y_valid_internal),
-                            callbacks=[lr_reducer, early_stopper])
+                            callbacks=[lr_reducer, early_stopper], verbose=0)
         
         preds = itc_model.predict(X_train)
         concept_repr = np.zeros_like(c_train)
@@ -327,7 +327,7 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         model.fit(x=X_train, y=y_train_internal, 
                         epochs=epochs, batch_size=batch_size,
                         validation_data=(X_valid, y_valid_internal),
-                        callbacks=[lr_reducer, early_stopper])
+                        callbacks=[lr_reducer, early_stopper], verbose=0)
 
         if path:
             model.save(path)
