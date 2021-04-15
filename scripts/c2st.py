@@ -72,6 +72,22 @@ def domain_classifier_experiment(c2st_param, dataset, model, X_train, y_train, c
     # Train and evaluate model (cross-validation)
     # Store the result in dict_result
     for _ in tqdm(n_exp):
+        # No shift case
+        X_test_subset, y_test_subset, c_test_subset, indices = get_random_data_subset(X_test, y_test, 
+                                                                                            c_test, test_sample)
+        
+        # Generate synthetic data
+        X_train_new, y_train_new, c_train_new, X_val_new, y_val_new, c_val_new, X_test_new, y_test_new, c_test_new = generate_domain_classifier_data(X_train, y_train, c_train, 
+                                                                                                                                                    X_test_subset, y_test_subset, c_test_subset)                                                                                                                                            
+        # Train the model
+        model = build_binary_classifier(dataset, c2st_param, X_train_new, y_train_new,
+                                c_train_new, X_val_new, y_val_new, c_val_new, training_mode,
+                                untrained_cto, orig_dims)
+        # Evaluate the trained model
+        acc, cm = evaluate_binary_classifier(c2st_param, model, X_test_new, y_test_new, orig_dims)
+        dict_result["no_shift"]["accuracy"].append(acc)
+        dict_result["no_shift"]["confusion_matrix"].append(cm)
+        
         for shift_intensity in shift_intensities:
             for shift_prop in shift_props:
                 # Select subset of tests randomly (of size as specified in the parameter)
@@ -223,8 +239,14 @@ def initialise_domain_classifier_dictionary(shift_intensities, shift_props):
         dict_result[shift_intensity] = dict()
         for shift_prop in shift_props:
             dict_result[shift_intensity][shift_prop] = {
-                "accuracy": {},
-                "confusion_matrix": {}
+                "accuracy": [],
+                "confusion_matrix": []
             }
+    
+    # No shift
+    dict_result["no_shift"] = {
+        "accuracy": [],
+        "confusion_matrix": []
+    }
     
     return dict_result

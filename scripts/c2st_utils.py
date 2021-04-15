@@ -88,7 +88,7 @@ def evaluate_binary_classifier(c2st_param, model, X_test, y_test, orig_dims):
                                                 orig_dims[1], orig_dims[2]))
             y_test_pred = np.argmax(y_test_pred, axis=1)
             acc = accuracy_score(y_test_pred, y_test)
-            cm = confusion_matrix(y_test_score, y_test)
+            cm = confusion_matrix(y_test_pred, y_test)
         else:
             preds = model.predict(X_test.reshape(-1, orig_dims[0], orig_dims[1],
                                                 orig_dims[2]))
@@ -215,7 +215,7 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         # Train the itc model
         lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
         early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-        epochs = 200
+        epochs = 1000
         batch_size = 128
 
         # Get the y
@@ -244,7 +244,7 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         # Train the itc model
         lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
         early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-        epochs = 200
+        epochs = 1000
         batch_size = 128
 
         # Get the y
@@ -315,7 +315,7 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         
         lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
         early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-        epochs = 200
+        epochs = 1000
         batch_size = 128
 
         # Train model
@@ -422,7 +422,7 @@ def generate_domain_classifier_data(X_train, y_train,
     X_test_new, y_test_new, c_test_new = unison_shuffled_copies(X_test_new, y_test_new, c_test_new)
     X_val_new, y_val_new, c_val_new = unison_shuffled_copies(X_val_new, y_val_new, c_val_new)
 
-    return X_train_new, y_train_new, X_val_new, y_val_new, X_test_new, y_test_new
+    return X_train_new, y_train_new, c_train_new, X_val_new, y_val_new, c_val_new, X_test_new, y_test_new, c_test_new
 
 
 #-------------------------------------------------------------------------------
@@ -437,6 +437,6 @@ def unison_shuffled_copies(a, b, c):
     :return: shuffled a, b, c
     """
 
-    assert len(a) == len(b)
+    assert len(a) == len(b) == len(c)
     p = np.random.permutation(len(a))
     return a[p], b[p], c[p]

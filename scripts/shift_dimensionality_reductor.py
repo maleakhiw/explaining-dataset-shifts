@@ -383,6 +383,7 @@ class ConceptBottleneckModel:
         self.cto_model = cto_model # we assume that the concept-to-output model has predict_proba
         self.dataset = dataset
     
+    ## TODO: ITC_PREDICT
     def predict(self, x):
         """
         Mimic how tensorflow predict function behaves.
