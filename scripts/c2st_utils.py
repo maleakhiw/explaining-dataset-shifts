@@ -335,11 +335,6 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         return model
 
 
-def concept_model_extraction():
-    # TODO
-    pass
-
-
 #-------------------------------------------------------------------------------
 ## Dataset construction
 

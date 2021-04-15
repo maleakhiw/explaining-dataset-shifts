@@ -393,6 +393,7 @@ def single_experiment(model, method, X_valid, X_test,
     
     return (test_statistic, p_val, detection_result, ppf)
 
+
 #-------------------------------------------------------------------------------
 ## Visualisation functions
 

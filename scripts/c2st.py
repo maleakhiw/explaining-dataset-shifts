@@ -121,6 +121,96 @@ def domain_classifier_experiment(c2st_param, dataset, X_train, y_train, c_train,
 #-------------------------------------------------------------------------------
 ## Visualisation
 
+def summary_tables_dc(list_dict_result, list_labels):
+    """
+    Generate summary table displaying the accuracy for determining whether data
+    instances come from source or target distributions. We marginalise based on
+    shift intensities.
+
+    :param list_dict_result: list of dictionary results from experimentation (see
+        domain_classifier_experiment for the dictionary structure).
+    :param list_labels: list method names (to be used for printing purposes).
+    """
+
+    shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
+    shift_props = [0.1, 0.5, 1.0]
+
+    # Iterate over all methods and print tables
+    for dict_result, label in zip(list_dict_result, list_labels):
+        display(Markdown(f"## Method: {label}"))
+
+        print(f"No-shift accuracy: {np.mean(dict_result['no_shift']['accuracy'])}\
+            /{np.std(dict_result['no_shift']['accuracy'])}")
+
+        # [[0.1, 0.5, 1.0], [0.1, 0.5, 1.0]]
+        accuracy = []
+
+        for shift_intensity in shift_intensities:
+            temp = []
+            for shift_prop in shift_props:
+                acc = np.mean(dict_result[shift_intensity][shift_prop]["accuracy"])
+                std = np.std(dict_result[shift_intensity][shift_prop]["accuracy"])
+                temp.append(f"{acc}/{std}")
+            accuracy.append(temp)
+        
+        # Display table
+        accuracy_df = pd.DataFrame(accuracy)
+        accuracy_df.index = ["Small", "Medium", "Large"]
+        accuracy_df.columns = ["10%", "50%", "100%"]
+        display(accuracy_df)
+        print()
+
+def barplot_accuracy_domain_classifier(list_dict_result, list_labels):
+    """
+    Create a bar plot depicting the accuracy of various all methods for 
+    each shift type and intensity. (y-axis=accuracy, x-axis=intensity), each method = bars
+    with different colour. title = shift proportion (3 axes: 10%, 50%, and 100%).
+
+    :param list_dict_result: list of dictionary results from experimentation (see
+        domain_classifier_experiment for the dictionary structure).
+    :param list_labels: list method names (to be used as legend).
+    """
+
+    ## The following are the data type that is accepted by the plotting function.
+    # Dataframe
+    # acc | method (hue) | intensity | proportion
+    # Dict
+    # {
+        # "acc": [],
+        # "method": [],
+        # "intensity": [],
+        # "proportion": []
+    # }
+
+    dict_plot = {
+        "accuracy": [],
+        "method": [],
+        "intensity": [],
+        "proportion": []
+    }
+
+    shift_intensities = [ShiftIntensity.Small, ShiftIntensity.Medium, ShiftIntensity.Large]
+    shift_intensities_str = ["small", "medium", "large"]
+    shift_props = [0.1, 0.5, 1.0]
+
+    # Iterate over all methods and print tables
+    for dict_result, label in zip(list_dict_result, list_labels):
+        for shift_intensity_str, shift_intensity in zip(shift_intensities_str, shift_intensities):
+            for shift_prop in shift_props:
+                for i in range(len(dict_result[shift_intensity][shift_prop]["accuracy"])):
+                    acc = dict_result[shift_intensity][shift_prop]["accuracy"][i]
+                    dict_plot["accuracy"].append(acc)
+                    dict_plot["method"].append(label)
+                    dict_plot["intensity"].append(shift_intensity_str)
+                    dict_plot["proportion"].append(shift_prop)
+
+    df_dict_plot = pd.DataFrame(dict_plot)
+
+    # Draw the bar plot
+    sns.catplot(x="intensity", y="accuracy", hue="method", col="proportion",
+        data=df_dict_plot, kind="bar", height=4, aspect=.7)
+
+    plt.show()
 
 
 #-------------------------------------------------------------------------------

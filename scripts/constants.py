@@ -176,6 +176,5 @@ class ClassifierTwoSampleTest(Enum):
 
     FFNN = 0
     CBM = 1
-    CME = 2
-    OCSVM = 3 # note that the one-class SVM is used only for computing most likely shifted samples.
-    LDA = 4
+    OCSVM = 2 # note that the one-class SVM is used only for computing most likely shifted samples.
+    LDA = 3
