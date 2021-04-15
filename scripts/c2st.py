@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
 import matplotlib.style as style
+from IPython.display import display, Markdown, Latex
 
 from constants import *
 from shift_dimensionality_reductor import *
@@ -29,7 +30,7 @@ style.use('fivethirtyeight') # Matplotlib style
 #-------------------------------------------------------------------------------
 ## Data collection
 
-def domain_classifier_experiment(c2st_param, dataset, model, X_train, y_train, c_train,
+def domain_classifier_experiment(c2st_param, dataset, X_train, y_train, c_train,
                                 X_test, y_test, c_test,
                                 shift_type, orig_dims, untrained_cto=None, training_mode=None,
                                 n_exp=5, test_sample=10000, shift_type_params=None):
@@ -39,7 +40,6 @@ def domain_classifier_experiment(c2st_param, dataset, model, X_train, y_train, c
 
     :param c2st_param: one of the ClassifierTwoSampleTest parameters in constants.py.
     :param dataset: one of the dataset options in constants.py.
-    :param model: the model (sklearn or tensorflow) as specified by the c2st_param.
     :param X_train, y_train, c_train: training data (images, labels, concepts). FLATTENED.
     :param X_test, y_test, c_test: testing data (images, labels, concepts), FLATTENED.
     :param shift_type: the shift type, as specified in constants.py.
@@ -71,7 +71,7 @@ def domain_classifier_experiment(c2st_param, dataset, model, X_train, y_train, c
 
     # Train and evaluate model (cross-validation)
     # Store the result in dict_result
-    for _ in tqdm(n_exp):
+    for _ in tqdm(range(n_exp)):
         # No shift case
         X_test_subset, y_test_subset, c_test_subset, indices = get_random_data_subset(X_test, y_test, 
                                                                                             c_test, test_sample)
@@ -120,6 +120,8 @@ def domain_classifier_experiment(c2st_param, dataset, model, X_train, y_train, c
 
 #-------------------------------------------------------------------------------
 ## Visualisation
+
+
 
 #-------------------------------------------------------------------------------
 ## Add-on functionalities
@@ -251,7 +253,7 @@ def initialise_domain_classifier_dictionary(shift_intensities, shift_props):
     
     return dict_result
 
-def save_result_dc(shift_str, dict_result, scratch=True, dataset_fname="dSprites"):
+def save_result_dc(shift_str, method_str, dict_result, scratch=True, dataset_fname="dSprites"):
     """
     Used to save dict result after running the experiment.
 
@@ -259,7 +261,7 @@ def save_result_dc(shift_str, dict_result, scratch=True, dataset_fname="dSprites
     :param dict_result: result to be stored.
     """
 
-    filename = f"{shift_str}_domain_classifier.pickle"
+    filename = f"{shift_str}_dc_{method_str}.pickle"
     if scratch:
         path = f"/local/scratch/maw219/{filename}"
     else:
@@ -269,7 +271,7 @@ def save_result_dc(shift_str, dict_result, scratch=True, dataset_fname="dSprites
         pickle.dump(dict_result, handle)
         print("Saving successfully.")
 
-def load_result_dc(shift_str, scratch=True, dataset_fname="dSprites"):
+def load_result_dc(shift_str, method_str, scratch=True, dataset_fname="dSprites"):
     """
     Used to load pickled experimentation result.
 
@@ -278,7 +280,7 @@ def load_result_dc(shift_str, scratch=True, dataset_fname="dSprites"):
     :return: dict_result.
     """
 
-    filename = f"{shift_str}_domain_classifier.pickle"
+    filename = f"{shift_str}_dc_{method_str}.pickle"
     if scratch:
         path = f"/local/scratch/maw219/{filename}"
     else:

@@ -383,12 +383,11 @@ class ConceptBottleneckModel:
         self.cto_model = cto_model # we assume that the concept-to-output model has predict_proba
         self.dataset = dataset
     
-    ## TODO: ITC_PREDICT
-    def predict(self, x):
+    def itc_predict(self, x):
         """
-        Mimic how tensorflow predict function behaves.
-
         :param x: the images data.
+
+        :return the array of concepts prediction.
         """
 
         # Input to concept prediction
@@ -402,7 +401,7 @@ class ConceptBottleneckModel:
             y_pred = np.argmax(preds[5], axis=1)
 
             itc_preds = np.array([color_pred, shape_pred, scale_pred, 
-                        rotation_pred, x_pred, y_pred]).T
+                        rotation_pred, x_pred, y_pred])
         
         
         elif self.dataset == Dataset.SMALLNORB:
@@ -414,7 +413,7 @@ class ConceptBottleneckModel:
             lighting_pred = np.argmax(preds[4], axis=1)
 
             itc_preds = np.array([category_pred, instance_pred, elevation_pred,
-                        azimuth_pred, lighting_pred]).T
+                        azimuth_pred, lighting_pred])
         
         else:
             preds = self.itc_model.predict(x)
@@ -426,7 +425,18 @@ class ConceptBottleneckModel:
             orientation_pred = np.argmax(preds[5], axis=1)
 
             itc_preds = np.array([floor_pred, wall_pred, object_pred,
-                        scale_pred, shape_pred, orientation_pred]).T
+                        scale_pred, shape_pred, orientation_pred])
+        
+        return itc_preds
+
+    def predict(self, x):
+        """
+        Mimic how tensorflow predict function behaves.
+
+        :param x: the images data.
+        """
+
+        itc_preds = self.itc_predict(x).T
         
         # Concept to output prediction
         return self.cto_model.predict_proba(itc_preds)
