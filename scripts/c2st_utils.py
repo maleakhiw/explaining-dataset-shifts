@@ -15,6 +15,8 @@ import numpy as np
 import pandas as pd
 import pickle
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 
 from constants import *
 from shift_dimensionality_reductor import *
@@ -233,10 +235,12 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         cbm = ConceptBottleneckModel(itc_model, cto_model, dataset)
 
         if path:
-            with open(path, "wb") as handle:
-                pickle.dump(cbm, handle)
+            with open(path + ".pickle", "wb") as handle:
+                pickle.dump(cto_model, handle)
                 print("Saving CBM successfully.")
-        
+
+            itc_model.save(path)
+
         return cbm
     
     # If sequential, train the cto model using prediction result of the itc model
@@ -266,9 +270,11 @@ def cbm_binary_classifier(dataset, training_mode, X_train, c_train, y_train,
         cbm = ConceptBottleneckModel(itc_model, cto_model, dataset)
 
         if path:
-            with open(path, "wb") as handle:
-                pickle.dump(cbm, handle)
+            with open(path + ".pickle", "wb") as handle:
+                pickle.dump(cto_model, handle)
                 print("Saving CBM successfully.")
+
+            itc_model.save(path)
 
         return cbm
     

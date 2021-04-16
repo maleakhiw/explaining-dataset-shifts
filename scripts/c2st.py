@@ -161,7 +161,7 @@ def summary_tables_dc(list_dict_result, list_labels):
 
 def barplot_accuracy_domain_classifier(list_dict_result, list_labels):
     """
-    Create a bar plot depicting the accuracy of various all methods for 
+    Create a bar plot depicting the accuracy of various methods for 
     each shift type and intensity. (y-axis=accuracy, x-axis=intensity), each method = bars
     with different colour. title = shift proportion (3 axes: 10%, 50%, and 100%).
 
