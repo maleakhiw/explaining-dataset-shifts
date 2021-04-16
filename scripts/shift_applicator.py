@@ -47,8 +47,9 @@ def apply_shift(X_test, y_test, c_test,
     
     # Knockout shift
     elif shift_type == ShiftType.Knockout:
-        X_test_shifted, y_test_shifted = apply_ko_shift(X_test_shifted, 
+        X_test_shifted, y_test_shifted, c_test_shifted = apply_ko_shift(X_test_shifted, 
                                                     y_test_shifted, 
+                                                    c_test_shifted,
                                                     shift_intensity, 
                                                     cl=shift_type_params["cl"])
     
@@ -186,7 +187,7 @@ def apply_adversarial_shift(X_te_orig, y_te_orig, adv_samples, indices, shift_in
 
     return X_te_1, y_te_1
 
-def apply_ko_shift(X_te_orig, y_te_orig, shift_intensity, cl=MAJORITY):
+def apply_ko_shift(X_te_orig, y_te_orig, c_te_orig, shift_intensity, cl=MAJORITY):
     """
     Given a dataset (test), this function applies the knockout shift, removing 
     data from a particular class.
@@ -205,6 +206,7 @@ def apply_ko_shift(X_te_orig, y_te_orig, shift_intensity, cl=MAJORITY):
 
     X_te_1 = None
     y_te_1 = None
+    c_te_1 = deepcopy(c_te_orig)
 
     # Knockout shift, creating class imbalance on the dataset
     if shift_intensity == ShiftIntensity.Large:
@@ -220,10 +222,12 @@ def apply_ko_shift(X_te_orig, y_te_orig, shift_intensity, cl=MAJORITY):
         c = Counter(y_te_orig)
         cl, _ = c.most_common()[0] 
     
-    X_te_1, y_te_1 = knockout_shift(X_te_orig, y_te_orig, cl, prop)
+    X_te_1, del_indices = knockout_shift(X_te_orig, y_te_orig, cl, prop, return_indices=True)
+    not_del_indices = [i for i in range(len(y_te_orig)) if i not in del_indices]
+    c_te_1 = c_te_1[not_del_indices, :]
+    y_te_1 = np.delete(y_te_orig, del_indices, axis=0)
 
-    return (X_te_1, y_te_1)
-
+    return (X_te_1, y_te_1, c_te_1)
 
 def apply_concept_shift(X_te_orig, y_te_orig, c_te_orig, concept_idx, 
     shift_intensity, cl=MAJORITY):

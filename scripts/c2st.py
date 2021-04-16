@@ -139,7 +139,7 @@ def summary_tables_dc(list_dict_result, list_labels):
     for dict_result, label in zip(list_dict_result, list_labels):
         display(Markdown(f"## Method: {label}"))
 
-        print(f"No-shift accuracy: {round(np.mean(dict_result['no_shift']['accuracy']), 2)}/{round(np.std(dict_result['no_shift']['accuracy']), 2)}")
+        # print(f"No-shift accuracy: {round(np.mean(dict_result['no_shift']['accuracy']), 2)}")
 
         # [[0.1, 0.5, 1.0], [0.1, 0.5, 1.0]]
         accuracy = []
@@ -148,8 +148,7 @@ def summary_tables_dc(list_dict_result, list_labels):
             temp = []
             for shift_prop in shift_props:
                 acc = np.mean(dict_result[shift_intensity][shift_prop]["accuracy"])
-                std = np.std(dict_result[shift_intensity][shift_prop]["accuracy"])
-                temp.append(f"{round(acc, 2)}/{round(std, 2)}")
+                temp.append(round(acc, 2))
             accuracy.append(temp)
         
         # Display table
