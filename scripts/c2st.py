@@ -203,10 +203,33 @@ def barplot_accuracy_domain_classifier(list_dict_result, list_labels):
                     dict_plot["proportion"].append(shift_prop)
 
     df_dict_plot = pd.DataFrame(dict_plot)
+    df_dict_plot["proportion"] = df_dict_plot["proportion"].map({0.1: "10%", 0.5: "50%", 1.0: "100%"})
 
     # Draw the bar plot
-    sns.catplot(x="intensity", y="accuracy", hue="method", col="proportion",
-        data=df_dict_plot, kind="bar", height=4, aspect=.7, ci=None)
+    g = sns.catplot(x="intensity", y="accuracy", hue="method", col="proportion",
+        data=df_dict_plot, kind="bar", height=4, aspect=.8, ci=95, errwidth=2)
+    g.set(ylim=(0, 1.0))
+    
+    (g.set_axis_labels("Intensity", "Accuracy")
+      .set_xticklabels(["Small", "Medium", "Large"])
+      .set_yticklabels([0, 0.2, 0.4, 0.6, 0.8, 1.0]))
+
+    g.fig.set_facecolor("white")
+    for ax in g.axes[0]:
+        ax.set_facecolor("white")
+        ax.tick_params(axis="both", which="major", labelsize=12)
+        
+        # Despine
+        for axis in ["top", "bottom", "left", "right"]:
+            ax.spines[axis].set_linewidth(0)
+        ax.xaxis.label.set_fontsize(14)
+        ax.yaxis.label.set_fontsize(14)
+        ax.title.set_fontsize(16)
+    
+    # Edit legend
+    g._legend.set_title("Methods")
+    new_labels = ["LDA", "FFNN", "CBM (Independent)", "CBM (Sequential)", "CBM (Joint)"]
+    for t, l in zip(g._legend.texts, new_labels): t.set_text(l)
 
     plt.show()
 
