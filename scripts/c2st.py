@@ -22,6 +22,7 @@ from shift_statistical_test import *
 from experiment_utils import get_random_data_subset
 from shift_applicator import *
 from c2st_utils import *
+from data_utils import *
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -232,6 +233,34 @@ def barplot_accuracy_domain_classifier(list_dict_result, list_labels):
     for t, l in zip(g._legend.texts, new_labels): t.set_text(l)
 
     plt.show()
+
+def plot_most_different_most_similar_exemplars(X_test, most_conf_test_indices, orig_dims, num_images):
+    """
+    Plot most different and most similar exemplars.
+
+    :param X_test: the images data flattened.
+    :param most_conf_test_indices: indices ordered by how confident the domain classifier is that it is coming from
+        target distribution. Top of list = most confident, bottom of list = least confident.
+    :param orig_dims: original shape of the images.
+    :param num_images: the number of images to be shown for most different and most similar exemplars.
+    """
+
+    if orig_dims[2] == 1:
+        # Plot most similar
+        display(Markdown(f"## Most similar exemplars"))
+        show_images_grid(X_test[most_conf_test_indices[::-1]].reshape([-1, orig_dims[0], orig_dims[1]]), num_images)
+
+        # Plot most different
+        display(Markdown(f"## Most different exemplars"))
+        show_images_grid(X_test[most_conf_test_indices].reshape([-1, orig_dims[0], orig_dims[1]]), num_images)
+    else:
+        # Plot most similar
+        display(Markdown(f"## Most similar exemplars"))
+        show_images_grid(X_test[most_conf_test_indices[::-1]].reshape([-1, orig_dims[0], orig_dims[1], orig_dims[2]]), num_images)
+
+        # Plot most different
+        display(Markdown(f"## Most different exemplars"))
+        show_images_grid(X_test[most_conf_test_indices].reshape([-1, orig_dims[0], orig_dims[1], orig_dims[2]]), num_images)
 
 
 #-------------------------------------------------------------------------------

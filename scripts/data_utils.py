@@ -37,6 +37,8 @@ def show_images_grid(imgs_, num_images=25):
             ax.axis("off")
         else:
             ax.axis('off')
+    
+    plt.show()
 
 def visualise_adversarial(original_images, perturb_patterns, adversarial_images, 
                           orig_dims, model, labels_str, n_plots=50):
