@@ -65,3 +65,23 @@ All experimentation data have been pickled and stored inside ```results```. All 
 - Dmitry Kazhdan (dk525@cam.ac.uk)
 - Botty Dimanov (btd26@cam.ac.uk) 
 - Mateja Jamnik (mateja.jamnik@cl.cam.ac.uk)
+
+## Citing:
+```
+@article{DBLP:journals/corr/abs-2104-08952,
+  author    = {Maleakhi A. Wijaya and
+               Dmitry Kazhdan and
+               Botty Dimanov and
+               Mateja Jamnik},
+  title     = {Failing Conceptually: Concept-Based Explanations of Dataset Shift},
+  journal   = {CoRR},
+  volume    = {abs/2104.08952},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2104.08952},
+  archivePrefix = {arXiv},
+  eprint    = {2104.08952},
+  timestamp = {Mon, 26 Apr 2021 17:25:10 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/abs-2104-08952.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+```
